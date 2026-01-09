@@ -128,9 +128,20 @@ namespace {
 				TEXT("rightToes"),
 			};
 
+			// UE5.7+ uses foot-based IK goals for better stability with Mannequin animations
+			// UE5.6 and earlier use toe-based goals
+			if (table_no == 0xFFFF) {
+#if UE_VERSION_OLDER_THAN(5,7,0)
+				table_no = 0; // Use toe-based goals for UE5.6 and earlier
+#else
+				table_no = 1; // Use foot-based goals for UE5.7+
+#endif
+			}
+
 			if (table_no == 0){
-				// not change
+				// not change - toe-based goals
 			}else if (table_no == 1){
+				// foot-based goals
 				TArray < FString > tmp = {
 					TEXT("leftHand"),
 					TEXT("rightHand"),
@@ -1318,8 +1329,12 @@ bool VRMConverter::ConvertIKRig(UVrmAssetListObject *vrmAssetList) {
 				}
 
 				for (auto& t : table) {
+					// UE5.7+ uses foot-based IK goals (mask bit 1), UE5.6 and earlier use toe-based (mask bit 0)
+#if UE_VERSION_OLDER_THAN(5,7,0)
+					if ((t.mask & (1 << 0)) == 0) {
+#else
 					if ((t.mask & (1 << 1)) == 0) {
-					//if ((t.mask & (1 << ik_no)) == 0) {
+#endif
 							continue;
 					}
 					if (AddedChainList.Contains(t.chain)) {
@@ -1377,8 +1392,13 @@ bool VRMConverter::ConvertIKRig(UVrmAssetListObject *vrmAssetList) {
 						AddedChainList.Add(t.chain);
 					}
 				}
-				//rigcon.LocalSolverSetup(vrmAssetList, ik_no);
+				// Call LocalSolverSetup with version-appropriate table_no
+				// UE5.7+: table_no=1 (foot-based goals), UE5.6-: table_no=0 (toe-based goals)
+#if UE_VERSION_OLDER_THAN(5,7,0)
+				rigcon.LocalSolverSetup(vrmAssetList, 0);
+#else
 				rigcon.LocalSolverSetup(vrmAssetList, 1);
+#endif
 
 				for (auto& modelName : vrmAssetList->VrmMetaObject->humanoidBoneTable) {
 					if (modelName.Key == "" || modelName.Value == "") {

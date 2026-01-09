@@ -36,4 +36,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "VRM4U")
 	static int EvaluateCurvesFromSequence(const UMovieSceneSequence* Seq, float FrameNo, TArray<FString>& names, TArray<float>& curves);
+
+	/**
+	 * Fix IK Rig for UE5.7+ retargeting compatibility.
+	 * Updates IK goals from toe-based (UE5.6) to foot-based (UE5.7+) configuration.
+	 * This function is useful for migrating existing VRM assets imported in UE5.6 to work correctly in UE5.7+.
+	 * 
+	 * @param IKRigAsset The IK Rig asset to fix (typically named IK_*_Mannequin)
+	 * @return true if the fix was applied successfully, false otherwise
+	 */
+	UFUNCTION(BlueprintCallable, Category = "VRM4U", meta = (DevelopmentOnly))
+	static bool FixIKRigForUE57Retargeting(class UIKRigDefinition* IKRigAsset);
 };

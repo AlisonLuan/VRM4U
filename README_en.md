@@ -30,6 +30,9 @@ Also it can load models on runtime.
  - Windows, Android, iOS, Mac(by ProjectBuild)
  - **For packaging, please download from UnrealEngine_VRM4UPlugin repository.**
 
+### Important Note for UE5.7+ Users
+UE5.7 introduced changes to the IK Rig system that affect retargeting configuration. VRM4U automatically generates version-appropriate settings. If you're migrating assets from UE5.6, see [UE57_RETARGETING_FIX.md](./UE57_RETARGETING_FIX.md) for details.
+
 ## SampleMap
 - VRM4UContent/Maps/VRM4U_sample.umap
 ![3](https://raw.githubusercontent.com/wiki/ruyo/VRM4U/images/samplemap.png)
