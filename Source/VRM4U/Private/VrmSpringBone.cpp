@@ -2,6 +2,7 @@
 
 #include "VrmAssetListObject.h"
 #include "Engine/World.h"
+#include "VRM4U.h"
 
 VrmSpringBone::VrmSpringBone()
 {
@@ -277,18 +278,27 @@ namespace VRMSpringBone {
 	}
 
 	void VRMSpringManager::init(const UVrmMetaObject* meta, FComponentSpacePoseContext& Output) {
-		if (meta == nullptr) return;
+		if (meta == nullptr) {
+			UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] Init failed: VrmMetaObject is null. SpringBone physics will not work."));
+			return;
+		}
 		if (bInit) return;
 
 		if (meta->GetVRMVersion() == 1) return;
-		if (meta->VrmAssetListObject == nullptr) return;
+		if (meta->VrmAssetListObject == nullptr) {
+			UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] Init failed: VrmAssetListObject is null. SpringBone physics will not work."));
+			return;
+		}
 
 		skeletalMesh = VRMGetSkinnedAsset(Output.AnimInstanceProxy->GetSkelMeshComponent());
 		//skeletalMesh = meta->SkeletalMesh;
 		const FReferenceSkeleton& RefSkeleton = VRMGetRefSkeleton(skeletalMesh);
 		const auto& RefSkeletonTransform = Output.Pose.GetPose().GetBoneContainer().GetRefPoseArray();
 
-		spring.SetNum(meta->VRMSpringMeta.Num());
+		const int32 SpringCount = meta->VRMSpringMeta.Num();
+		UE_LOG(LogVRM4U, Log, TEXT("[VRM4U SpringBone] Initializing VRM0 SpringBone: Found %d spring groups in metadata"), SpringCount);
+		
+		spring.SetNum(SpringCount);
 
 		for (int i = 0; i < spring.Num(); ++i) {
 			auto& s = spring[i];
@@ -303,10 +313,18 @@ namespace VRMSpringBone {
 			s.hitRadius = metaS.hitRadius;
 
 			s.RootSpringData.SetNum(metaS.bones.Num());
+			int32 ValidBoneCount = 0;
 			for (int scount = 0; scount < s.RootSpringData.Num(); ++scount) {
 				s.RootSpringData[scount].boneName = *metaS.boneNames[scount];
 				s.RootSpringData[scount].boneIndex = RefSkeleton.FindBoneIndex(*metaS.boneNames[scount]);
+				if (s.RootSpringData[scount].boneIndex != INDEX_NONE) {
+					ValidBoneCount++;
+				} else {
+					UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] Spring group %d: Bone '%s' not found in skeleton"), i, *metaS.boneNames[scount]);
+				}
 			}
+			UE_LOG(LogVRM4U, Log, TEXT("[VRM4U SpringBone] Spring group %d: %d/%d bones found (stiffness=%.2f, gravity=%.2f, drag=%.2f, hitRadius=%.2f)"),
+				i, ValidBoneCount, metaS.bones.Num(), s.stiffness, s.gravityPower, s.dragForce, s.hitRadius);
 			// TODO add child
 
 			s.SpringDataChain.SetNum(metaS.bones.Num());
@@ -423,6 +441,7 @@ namespace VRMSpringBone {
 
 		// collider
 		colliderGroup.SetNum(meta->VRMColliderMeta.Num());
+		int32 TotalColliderCount = 0;
 		for (int i = 0; i < colliderGroup.Num(); ++i) {
 			auto& cg = colliderGroup[i];
 			const auto& cmeta = meta->VRMColliderMeta[i];
@@ -431,6 +450,7 @@ namespace VRMSpringBone {
 			cg.node_name = *cmeta.boneName;
 
 			cg.colliders.SetNum(cmeta.collider.Num());
+			TotalColliderCount += cmeta.collider.Num();
 			for (int c = 0; c < cg.colliders.Num(); ++c) {
 				cg.colliders[c].offset = cmeta.collider[c].offset;
 				cg.colliders[c].radius = cmeta.collider[c].radius;
@@ -438,9 +458,12 @@ namespace VRMSpringBone {
 
 			TArray<VRMSpringCollider> colliders;
 		}
+		
+		UE_LOG(LogVRM4U, Log, TEXT("[VRM4U SpringBone] Initialized %d collider groups with %d total colliders"), colliderGroup.Num(), TotalColliderCount);
 
 
 		bInit = true;
+		UE_LOG(LogVRM4U, Log, TEXT("[VRM4U SpringBone] VRM0 SpringBone initialization complete. Physics is active."));
 	}
 	void VRMSpringManager::update(const FAnimNode_VrmSpringBone* animNode, float DeltaTime, FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) {
 		for (int i = 0; i < spring.Num(); ++i) {
@@ -531,7 +554,10 @@ namespace VRM1Spring {
 
 	void VRM1SpringManager::init(const UVrmMetaObject* meta, FComponentSpacePoseContext& Output) {
 
-		if (meta == nullptr) return;
+		if (meta == nullptr) {
+			UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] VRM1 init failed: VrmMetaObject is null. SpringBone physics will not work."));
+			return;
+		}
 
 		const FTransform ComponentTransform = Output.AnimInstanceProxy->GetComponentTransform();
 		FTransform ComponentToLocal = ComponentTransform.Inverse();
@@ -542,20 +568,33 @@ namespace VRM1Spring {
 		//const auto& RefSkeletonTransform = Output.Pose.GetPose().GetBoneContainer().GetRefPoseArray();
 		const auto& RefSkeletonTransform = RefSkeleton.GetRefBonePose();
 
+		const int32 SpringCount = vrmMetaObject->VRM1SpringBoneMeta.Springs.Num();
+		const int32 ColliderCount = vrmMetaObject->VRM1SpringBoneMeta.Colliders.Num();
+		const int32 ColliderGroupCount = vrmMetaObject->VRM1SpringBoneMeta.ColliderGroups.Num();
+		UE_LOG(LogVRM4U, Log, TEXT("[VRM4U SpringBone] Initializing VRM1 SpringBone: %d springs, %d colliders, %d collider groups"), 
+			SpringCount, ColliderCount, ColliderGroupCount);
 
+		int32 TotalJointCount = 0;
+		int32 ValidJointCount = 0;
 		for (auto& s : vrmMetaObject->VRM1SpringBoneMeta.Springs) {
+			TotalJointCount += s.joints.Num();
 			for (int jointNo = 0; jointNo < s.joints.Num(); jointNo++) {
 
 				auto &j1 = s.joints[jointNo];
 
 				if (j1.boneNo == INDEX_NONE) {
+					UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] VRM1 joint '%s' has invalid bone index"), *j1.boneName);
 					continue;
 				}
 
 				int parentBoneIndex = RefSkeleton.GetParentIndex(j1.boneNo);
-				if (parentBoneIndex < 0) continue;
+				if (parentBoneIndex < 0) {
+					UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] VRM1 joint '%s' has no parent bone"), *j1.boneName);
+					continue;
+				}
 				FCompactPoseBoneIndex uu = Output.Pose.GetPose().GetBoneContainer().GetCompactPoseIndexFromSkeletonIndex(parentBoneIndex);
 				if (Output.Pose.GetPose().IsValidIndex(uu) == false) {
+					UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] VRM1 joint '%s' parent not in pose"), *j1.boneName);
 					continue;
 				}
 				FTransform parentTransform = Output.Pose.GetComponentSpaceTransform(uu);
@@ -563,6 +602,7 @@ namespace VRM1Spring {
 				auto& state = JointStateMap.FindOrAdd(j1.boneNo);
 
 				if (RefSkeletonTransform.IsValidIndex(j1.boneNo) == false) {
+					UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] VRM1 joint '%s' bone index %d out of range"), *j1.boneName, j1.boneNo);
 					continue;
 				}
 
@@ -586,9 +626,12 @@ namespace VRM1Spring {
 
 					state.resultQuat = t.GetRotation();
 				}
+				ValidJointCount++;
 			}
 		}
 		bInit = true;
+		UE_LOG(LogVRM4U, Log, TEXT("[VRM4U SpringBone] VRM1 SpringBone initialization complete. %d/%d joints initialized successfully. Physics is active."), 
+			ValidJointCount, TotalJointCount);
 	}
 
 	void VRM1SpringManager::update(const FAnimNode_VrmSpringBone* animNode, float DeltaTime, FComponentSpacePoseContext& Output, TArray<FBoneTransform>& OutBoneTransforms) {
