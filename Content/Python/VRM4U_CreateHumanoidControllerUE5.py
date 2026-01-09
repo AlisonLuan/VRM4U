@@ -186,7 +186,8 @@ modelBoneNameList = []
 for e in hierarchy.get_bones():
     if (e.type == unreal.RigElementType.BONE):
         modelBoneListAll.append(e)
-        modelBoneNameList.append("{}".format(e.name).lower())
+        # Normalize bone name: lowercase and trim whitespace
+        modelBoneNameList.append("{}".format(e.name).lower().strip())
 #    else:
 #        h_con.remove_element(e)
 
@@ -271,9 +272,12 @@ for bone_h_base in humanoidBoneList:
         continue
 
     bone_m = meta.humanoid_bone_table[bone_h]
+    
+    # Trim whitespace and normalize bone name
+    bone_m_normalized = "{}".format(bone_m).lower().strip()
 
     try:
-        i = modelBoneNameList.index(bone_m.lower())
+        i = modelBoneNameList.index(bone_m_normalized)
     except:
         i = -1
     if (i < 0):
@@ -281,7 +285,7 @@ for bone_h_base in humanoidBoneList:
     if ("{}".format(bone_h).lower() == "upperchest"):
         continue;
 
-    humanoidBoneToModel["{}".format(bone_h).lower()] = "{}".format(bone_m).lower()
+    humanoidBoneToModel["{}".format(bone_h).lower()] = bone_m_normalized
 
     if ("{}".format(bone_h).lower() == "chest"):
         #upperchestがあれば、これの次に追加
@@ -404,7 +408,21 @@ for ee in humanoidBoneToModel:
     # ロケータ 座標更新
     # 不要な上層階層を考慮
 	
-    gTransform = hierarchy.get_global_transform(modelBoneListAll[modelBoneNameList.index(modelBoneNameSmall)])
+    # Get bone index with error handling
+    try:
+        boneIndex = modelBoneNameList.index(modelBoneNameSmall)
+    except ValueError:
+        print(f"ERROR: Bone '{modelBoneNameSmall}' not found in skeleton hierarchy!")
+        print(f"Available bones: {modelBoneNameList[:10]}...")  # Print first 10 for debugging
+        continue
+    
+    gTransform = hierarchy.get_global_transform(modelBoneListAll[boneIndex])
+    
+    # Debug logging for thumb bones to help diagnose issues
+    if "thumb" in humanoidBone.lower():
+        print(f"Thumb bone: {humanoidBone} -> model bone: {modelBoneNameSmall} (index: {boneIndex})")
+        print(f"  Transform location: {gTransform.translation}")
+    
     if count == 0:
         bone_initial_transform = gTransform
     else:
