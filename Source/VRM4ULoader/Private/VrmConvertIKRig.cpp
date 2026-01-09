@@ -153,22 +153,23 @@ namespace {
 
 
 			if (VRMConverter::Options::Get().IsBVHModel()) {
-				{
-					TArray < FString > tmp = {
-						TEXT("l_hand"),
-						TEXT("r_hand"),
-						TEXT("l_foot"),
-						TEXT("r_foot"),
-					};
-					a = tmp;
-				}
-				
-				if (table_no == 1) {
+				// BVH model bone names
+				if (table_no == 0) {
+					// UE5.6 and earlier: toe-based goals
 					TArray < FString > tmp = {
 						TEXT("l_hand"),
 						TEXT("r_hand"),
 						TEXT("l_toes"),
 						TEXT("r_toes"),
+					};
+					a = tmp;
+				} else if (table_no == 1) {
+					// UE5.7+: foot-based goals
+					TArray < FString > tmp = {
+						TEXT("l_hand"),
+						TEXT("r_hand"),
+						TEXT("l_foot"),
+						TEXT("r_foot"),
 					};
 					a = tmp;
 				}
