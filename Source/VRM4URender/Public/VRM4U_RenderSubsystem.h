@@ -63,6 +63,10 @@ class VRM4URENDER_API UVRM4U_RenderSubsystem : public UEngineSubsystem
 	GENERATED_BODY()
 
 	FDelegateHandle HandleTearDown;
+	FDelegateHandle HandleBeginPIE;
+	FDelegateHandle HandleEndPIE;
+	FDelegateHandle HandlePostOpaqueRender;
+	FDelegateHandle HandleOverlayRender;
 	bool bInitPIE = false;
 	bool bIsPlay = false;
 

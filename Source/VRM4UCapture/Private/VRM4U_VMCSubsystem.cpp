@@ -2,6 +2,7 @@
 
 
 #include "VRM4U_VMCSubsystem.h"
+#include "VRM4UCaptureLog.h"
 #include "VrmVMCObject.h"
 
 #include "Engine/Engine.h"
@@ -102,12 +103,30 @@ void UVRM4U_VMCSubsystem::Initialize(FSubsystemCollectionBase& Collection) {
 	Super::Initialize(Collection);
 
 #if WITH_EDITOR
-	FEditorDelegates::BeginStandaloneLocalPlay.AddLambda([&](const uint32 processID) {
+	UE_LOG(LogVRM4UCapture, Log, TEXT("VRM4U_VMCSubsystem: Initialize - Registering standalone play delegate"));
+	HandleBeginStandaloneLocalPlay = FEditorDelegates::BeginStandaloneLocalPlay.AddLambda([this](const uint32 processID) {
+		UE_LOG(LogVRM4UCapture, Log, TEXT("VRM4U_VMCSubsystem: BeginStandaloneLocalPlay event fired - destroying all VMC servers"));
 		this->DestroyVMCServerAll();
 	});
 #endif
 
 }
 
+void UVRM4U_VMCSubsystem::Deinitialize() {
 
+	UE_LOG(LogVRM4UCapture, Log, TEXT("VRM4U_VMCSubsystem: Deinitialize - Cleaning up"));
 
+#if WITH_EDITOR
+	// Unregister standalone play delegate
+	if (HandleBeginStandaloneLocalPlay.IsValid()) {
+		FEditorDelegates::BeginStandaloneLocalPlay.Remove(HandleBeginStandaloneLocalPlay);
+		HandleBeginStandaloneLocalPlay.Reset();
+		UE_LOG(LogVRM4UCapture, Log, TEXT("VRM4U_VMCSubsystem: Removed BeginStandaloneLocalPlay delegate"));
+	}
+#endif
+
+	// Clean up all VMC servers
+	DestroyVMCServerAll();
+
+	Super::Deinitialize();
+}

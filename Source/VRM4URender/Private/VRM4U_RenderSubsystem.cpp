@@ -1,7 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// VRM4U Copyright (c) 2021-2024 Haruyoshi Yamamoto. This software is released under the MIT License.
 
 #include "VRM4U_RenderSubsystem.h"
+#include "VRM4URenderLog.h"
 #include "VrmExtensionRimFilterData.h"
 #include "RenderGraphBuilder.h"
 #include "RenderGraphResources.h"
@@ -87,19 +87,65 @@ namespace{
 void UVRM4U_RenderSubsystem::Initialize(FSubsystemCollectionBase& Collection) {
 	Super::Initialize(Collection);
 
+	UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: Initialize - Registering render delegates"));
+
 	SceneViewExtension = FSceneViewExtensions::NewExtension<FVrmSceneViewExtension>();
-	GetRendererModule().RegisterPostOpaqueRenderDelegate(FPostOpaqueRenderDelegate::CreateUObject(this, &UVRM4U_RenderSubsystem::OnPostOpaque));
-	GetRendererModule().RegisterOverlayRenderDelegate(FPostOpaqueRenderDelegate::CreateUObject(this, &UVRM4U_RenderSubsystem::OnOverlay));
+	HandlePostOpaqueRender = GetRendererModule().RegisterPostOpaqueRenderDelegate(FPostOpaqueRenderDelegate::CreateUObject(this, &UVRM4U_RenderSubsystem::OnPostOpaque));
+	HandleOverlayRender = GetRendererModule().RegisterOverlayRenderDelegate(FPostOpaqueRenderDelegate::CreateUObject(this, &UVRM4U_RenderSubsystem::OnOverlay));
 	
 	//GetRendererModule().GetResolvedSceneColorCallbacks().AddUObject(this, &UVRM4U_RenderSubsystem::OnResolvedSceneColor_RenderThread);
 }
 
 void UVRM4U_RenderSubsystem::Deinitialize() {
 
+	UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: Deinitialize - Cleaning up delegates"));
+
+#if WITH_EDITOR
+	// Unregister PIE delegates
+	if (HandleBeginPIE.IsValid()) {
+		FEditorDelegates::BeginPIE.Remove(HandleBeginPIE);
+		HandleBeginPIE.Reset();
+		UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: Removed BeginPIE delegate"));
+	}
+	if (HandleEndPIE.IsValid()) {
+		FEditorDelegates::EndPIE.Remove(HandleEndPIE);
+		HandleEndPIE.Reset();
+		UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: Removed EndPIE delegate"));
+	}
+
+	// Unregister map change delegate
+	if (HandleTearDown.IsValid()) {
+		if (FModuleManager::Get().IsModuleLoaded("LevelEditor"))
+		{
+			FLevelEditorModule& LevelEditor = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
+			LevelEditor.OnMapChanged().Remove(HandleTearDown);
+			UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: Removed OnMapChanged delegate"));
+		}
+
+		// Always reset the handle to avoid leaving a dangling delegate handle
+		HandleTearDown.Reset();
+	}
+#endif
+
+	// Unregister render delegates
+	if (HandlePostOpaqueRender.IsValid()) {
+		GetRendererModule().RemovePostOpaqueRenderDelegate(HandlePostOpaqueRender);
+		HandlePostOpaqueRender.Reset();
+	}
+	if (HandleOverlayRender.IsValid()) {
+		GetRendererModule().RemoveOverlayRenderDelegate(HandleOverlayRender);
+		HandleOverlayRender.Reset();
+	}
+
 	{
 		FScopeLock lock(&cs_rim);
 		RimFilterData.Empty();
 	}
+
+	// Reset PIE state
+	bInitPIE = false;
+	bIsPlay = false;
+
 	Super::Deinitialize();
 }
 
@@ -310,27 +356,32 @@ void UVRM4U_RenderSubsystem::AddCaptureTexture(UTextureRenderTarget2D* Texture, 
 
 				
 				HandleTearDown = LevelEditor.OnMapChanged().AddUObject(this, &UVRM4U_RenderSubsystem::OnMapChange);
-						/*
-					HandleTearDown = LevelEditor.OnMapChanged().AddLambda([&](UWorld* World, EMapChangeType ChangeType)
+				// Note: The following lambda pattern is unsafe and was replaced with AddUObject above.
+				// Lambda with [&] capture can cause dangling references across PIE sessions.
+				/*
+				HandleTearDown = LevelEditor.OnMapChanged().AddLambda([this](UWorld* World, EMapChangeType ChangeType)
+				{
+					if (ChangeType == EMapChangeType::TearDownWorld)
 					{
-						if (ChangeType == EMapChangeType::TearDownWorld)
-						{
-							CaptureList.Empty();
-						}
-					});
-					*/
+						CaptureList.Empty();
+					}
+				});
+				*/
 			}
 		}
 	}
 
 	if (bInitPIE == false) {
 		bInitPIE = true;
-		FEditorDelegates::BeginPIE.AddLambda([&](const bool bIsSimulating) {
+		UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: Registering PIE delegates"));
+		HandleBeginPIE = FEditorDelegates::BeginPIE.AddLambda([this](const bool bIsSimulating) {
+			UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: BeginPIE event fired (PIE starting)"));
 			this->OnPIEEvent(true, false);
-			});
-		FEditorDelegates::EndPIE.AddLambda([&](const bool bIsSimulating) {
+		});
+		HandleEndPIE = FEditorDelegates::EndPIE.AddLambda([this](const bool bIsSimulating) {
+			UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: EndPIE event fired (PIE ending)"));
 			this->OnPIEEvent(false, true);
-			});
+		});
 	}
 #else
 	bIsPlay = true;
