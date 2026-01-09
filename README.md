@@ -37,6 +37,9 @@ VRM4UはUnrealEngine5(UE5, UE4)で動作する、VRMファイルのインポー�
 ### UE5.7以降をお使いの方へ
 UE5.7ではIK Rigの仕様変更により、自動生成されるリターゲット設定が異なります。UE5.6で作成したVRMアセットをUE5.7で使用する場合、マイグレーションが必要な場合があります。詳細は [UE57_RETARGETING_FIX.md](./UE57_RETARGETING_FIX.md) をご覧ください。
 
+### トラブルシューティング
+一般的な問題と解決方法については [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) をご覧ください。VMCプロトコルの問題については [VMC_TROUBLESHOOTING.md](./VMC_TROUBLESHOOTING.md) に詳細なガイドがあります。
+
 ## 使い方
 - [releases](https://github.com/ruyo/VRM4U/releases/latest)より利用するバージョンのプラグインをダウンロードし、「.uproject」とおなじ場所に「Plugins」フォルダを展開、以下のように配置ください
 

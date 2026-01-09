@@ -5,4 +5,6 @@
 #include "CoreMinimal.h"
 //#include "VRMImporterModule.h"
 
+// Console variable for VMC debugging - defined in VRM4UCapture.cpp
+extern TAutoConsoleVariable<int32> CVarVMCDebug;
 

@@ -12,6 +12,8 @@
 #include "VrmAssetListObject.h"
 #include "VrmMetaObject.h"
 #include "VrmUtil.h"
+#include "VRM4UCaptureLog.h"
+#include "VRM4UCapture.h"
 
 #include <algorithm>
 /////////////////////////////////////////////////////
@@ -50,6 +52,16 @@ void FAnimNode_VrmVMC::Initialize_AnyThread(const FAnimationInitializeContext& C
 		auto *s = subsystem->FindOrAddServer(ServerAddress, Port);
 		if (s) {
 			s->bForceUpdate = bForceUpdate;
+			
+			const bool bDebugEnabled = CVarVMCDebug.GetValueOnAnyThread() > 0;
+			if (bDebugEnabled)
+			{
+				UE_LOG(LogVRM4UCapture, Log, TEXT("VMC AnimNode: Initialized VMC receiver on %s:%d"), *ServerAddress, Port);
+			}
+		}
+		else
+		{
+			UE_LOG(LogVRM4UCapture, Warning, TEXT("VMC AnimNode: Failed to create VMC server on %s:%d"), *ServerAddress, Port);
 		}
 	}
 	bCreateServer = true;
@@ -128,6 +140,18 @@ void FAnimNode_VrmVMC::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCont
 	}
 
 	if (VMCData.BoneData.Num() == 0 && VMCData.CurveData.Num() == 0) {
+		const bool bDebugEnabled = CVarVMCDebug.GetValueOnAnyThread() > 0;
+		// Note: Throttle logging globally based on the engine frame counter to log once per second
+		if (bDebugEnabled && (GFrameCounter % 60 == 0))
+		{
+			// Find the VMC object to get diagnostics
+			auto* vmcObj = subsystem->FindOrAddServer(ServerAddress, Port);
+			if (vmcObj && vmcObj->GetTotalPacketsReceived() > 0)
+			{
+				UE_LOG(LogVRM4UCapture, Warning, TEXT("VMC AnimNode: Packets are being received (count: %d) but no bone/curve data is parsed. Possible protocol mismatch or data format issue."), 
+					vmcObj->GetTotalPacketsReceived());
+			}
+		}
 		return;
 	}
 	if (bApplyPerfectSync) {
@@ -283,6 +307,22 @@ void FAnimNode_VrmVMC::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCont
 			FAnimationRuntime::ConvertBoneSpaceTransformToCS(ComponentTransform, Output.Pose, a.Transform, a.BoneIndex, BoneSpace);
 		}
 		OutBoneTransforms.Add(a);
+	}
+
+	// Diagnostic: Check if root translation data exists but might not be applied properly
+	const bool bDebugEnabled = CVarVMCDebug.GetValueOnAnyThread() > 0;
+	if (bDebugEnabled)
+	{
+		auto* vmcObj = subsystem->FindOrAddServer(ServerAddress, Port);
+		if (vmcObj && vmcObj->HasReceivedRootTranslation() && bUseRemoteCenterPos)
+		{
+			// Note: Throttle logging globally based on the engine frame counter
+			const uint64 CurrentFrame = GFrameCounter;
+			if (CurrentFrame % 300 == 1) // Log approximately every ~5 seconds at 60fps
+			{
+				UE_LOG(LogVRM4UCapture, Display, TEXT("VMC AnimNode: Root translation data is being received and processed. If character is not moving, check Skeleton's Root Bone Translation Retargeting mode (should be 'Skeleton' not 'Animation')."));
+			}
+		}
 	}
 
 }

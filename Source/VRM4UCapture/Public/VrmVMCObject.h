@@ -44,6 +44,14 @@ class VRM4UCAPTURE_API UVrmVMCObject : public UObject
 	FVMCData VMCData_Cache;
 
 	bool bDataUpdated = false;
+
+	// Diagnostic tracking
+	int32 TotalPacketsReceived = 0;
+	double LastPacketReceivedTime = 0.0;
+	bool bHasReceivedRootTranslation = false;
+	int32 LastBoneCount = 0;
+	int32 LastCurveCount = 0;
+
 public:
 
 
@@ -58,4 +66,26 @@ public:
 
 	bool CopyVMCData(FVMCData& dst);
 	void ClearVMCData();
+
+	// Diagnostic methods - thread-safe access with critical section
+	int32 GetTotalPacketsReceived() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return TotalPacketsReceived; 
+	}
+	double GetLastPacketReceivedTime() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return LastPacketReceivedTime; 
+	}
+	bool HasReceivedRootTranslation() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return bHasReceivedRootTranslation; 
+	}
+	int32 GetLastBoneCount() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return LastBoneCount; 
+	}
+	int32 GetLastCurveCount() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return LastCurveCount; 
+	}
 };

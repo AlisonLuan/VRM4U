@@ -4,6 +4,7 @@
 #include "VRM4U_VMCSubsystem.h"
 #include "VRM4UCaptureLog.h"
 #include "VrmVMCObject.h"
+#include "VRM4UCapture.h"
 
 #include "Engine/Engine.h"
 #include "UObject/StrongObjectPtr.h"
@@ -84,7 +85,22 @@ void UVRM4U_VMCSubsystem::DestroyVMCServerAll() {
 
 
 bool UVRM4U_VMCSubsystem::CreateVMCServer(const FString ServerAddress, int port) {
-	return (FindOrAddServer(ServerAddress, port) != nullptr);
+	bool bSuccess = (FindOrAddServer(ServerAddress, port) != nullptr);
+	
+	const bool bDebugEnabled = CVarVMCDebug.GetValueOnAnyThread() > 0;
+	if (bDebugEnabled)
+	{
+		if (bSuccess)
+		{
+			UE_LOG(LogVRM4UCapture, Log, TEXT("VMC Subsystem: VMC server created/found for %s:%d"), *ServerAddress, port);
+		}
+		else
+		{
+			UE_LOG(LogVRM4UCapture, Warning, TEXT("VMC Subsystem: Failed to create VMC server for %s:%d"), *ServerAddress, port);
+		}
+	}
+	
+	return bSuccess;
 }
 
 void UVRM4U_VMCSubsystem::ClearData(const FString ServerAddress, int port) {
