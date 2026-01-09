@@ -100,14 +100,6 @@ bool UVrmEditorBPFunctionLibrary::FixIKRigForUE57Retargeting(UIKRigDefinition* I
         return OutName;
     };
     
-    // Helper lambda to convert foot goal/bone names back to toe equivalents
-    auto ConvertFootToToe = [](const FString& InName) -> FString {
-        FString OutName = InName;
-        OutName.ReplaceInline(TEXT("Foot"), TEXT("Toes"));
-        OutName.ReplaceInline(TEXT("foot"), TEXT("toes"));
-        return OutName;
-    };
-    
     // Helper lambda to check if a goal is toe-based
     auto IsToeBasedGoal = [](const FString& GoalName, const FString& BoneName) -> bool {
         return ((GoalName.Contains(TEXT("Toes")) || GoalName.Contains(TEXT("Toe"))) && 
@@ -244,12 +236,25 @@ bool UVrmEditorBPFunctionLibrary::FixIKRigForUE57Retargeting(UIKRigDefinition* I
             // We need to get the start bone to update the chain
             FString StartBone = Chain.StartBone.BoneName.ToString();
             
+            // Preserve IK goal assignment: if this chain was using a toe-based goal that
+            // was converted to a foot-based goal, remap to the new goal name.
+            FName GoalNameToUse = Chain.IKGoalName;
+            for (const TPair<FName, FName>& GoalPair : NewToOldGoalMapping)
+            {
+                // NewToOldGoalMapping maps NewGoalName -> OldGoalName
+                if (GoalPair.Value == Chain.IKGoalName)
+                {
+                    GoalNameToUse = GoalPair.Key;
+                    UE_LOG(LogTemp, Log, TEXT("  - Remapping chain goal from %s to %s"), *Chain.IKGoalName.ToString(), *GoalNameToUse.ToString());
+                    break;
+                }
+            }
+            
             UE_LOG(LogTemp, Log, TEXT("  - Updating chain '%s' end bone from %s to %s"), *ChainName, *EndBone, *NewEndBone);
             
-            // Remove and recreate the chain with new end bone
-            // Note: This is a simplified approach; in production you may want to preserve more chain settings
+            // Remove and recreate the chain with new end bone and updated goal
             Controller->RemoveRetargetChain(Chain.ChainName);
-            Controller->AddRetargetChain(Chain.ChainName, *StartBone, *NewEndBone, Chain.IKGoalName);
+            Controller->AddRetargetChain(Chain.ChainName, *StartBone, *NewEndBone, GoalNameToUse);
         }
     }
     

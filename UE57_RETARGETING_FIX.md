@@ -49,7 +49,7 @@ The easiest way to migrate multiple assets is using the provided Python script:
    - Navigate to `Plugins/VRM4U/Content/Python/VRM4U_FixIKRigUE57.py`
    - Click "Open" to execute
 
-The script will automatically find and fix all VRM IK Rig assets in your project.
+The script can automatically find and fix all VRM IK Rig assets in your project, but requires you to set `auto_confirm = True` in the script (line 91) before it will apply any changes. This is a safety measure to prevent accidental modifications.
 
 #### Manual Method: Via Blueprint (Editor Utility Widget):
 

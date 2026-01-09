@@ -88,25 +88,23 @@ def main():
     # 3. Have users modify this variable before running the script
     
     # For safety, default to False - users must explicitly enable auto-processing
-    auto_confirm = False  # Change this to True to skip confirmation, or modify below
+    # CHANGE THIS TO True TO ENABLE AUTOMATIC MIGRATION:
+    auto_confirm = False
     
-    if auto_confirm:
-        user_confirmed = True
-        unreal.log("\nAuto-confirm enabled - proceeding with migration...")
-    else:
+    if not auto_confirm:
         unreal.log("\n" + "!" * 80)
         unreal.log("WARNING: This script will modify IK Rig assets in your project!")
         unreal.log("Please ensure you have a backup before proceeding.")
         unreal.log("")
         unreal.log("To proceed:")
-        unreal.log("  1. Set 'auto_confirm = True' in the script, OR")
+        unreal.log("  1. Edit this script and set 'auto_confirm = True' (line 93), then run again, OR")
         unreal.log("  2. Call this script with confirmation handled by an Editor Utility Widget")
         unreal.log("!" * 80)
-        user_confirmed = False
-    
-    if not user_confirmed:
-        unreal.log("Migration cancelled by user.")
+        unreal.log("\nMigration cancelled - auto_confirm is False.")
         return
+    
+    # If we reach here, auto_confirm is True
+    unreal.log("\nAuto-confirm enabled - proceeding with migration...")
     
     # Process each IK Rig
     unreal.log("\nProcessing IK Rigs...")
