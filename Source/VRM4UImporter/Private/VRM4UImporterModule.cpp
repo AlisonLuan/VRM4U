@@ -45,6 +45,7 @@ public:
 		{
 #if	UE_VERSION_OLDER_THAN(4,22,0)
 #else
+			UE_LOG(LogVRM4UImporter, Log, TEXT("VRM4UImporter: Registering asset import delegates"));
 			OnAssetPostImportHandle = GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.AddRaw(this, &FVRM4UImporterModule::OnObjectImported);
 			OnAssetReimportHandle = GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetReimport.AddRaw(this, &FVRM4UImporterModule::OnObjectReimported);
 #endif
@@ -101,6 +102,7 @@ public:
 #if !UE_VERSION_OLDER_THAN(4,22,0)
 			if (GEditor && OnAssetPostImportHandle.IsValid())
 			{
+				UE_LOG(LogVRM4UImporter, Log, TEXT("VRM4UImporter: Unregistering asset import delegates"));
 				GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.Remove(OnAssetPostImportHandle);
 				OnAssetPostImportHandle.Reset();
 			}
