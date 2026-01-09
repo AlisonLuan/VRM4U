@@ -180,7 +180,8 @@ modelBoneNameList = []
 for e in h_mod.get_elements():
     if (e.type == unreal.RigElementType.BONE):
         modelBoneListAll.append(e)
-        modelBoneNameList.append("{}".format(e.name).lower())
+        # Normalize bone name: lowercase and trim whitespace
+        modelBoneNameList.append("{}".format(e.name).lower().strip())
 #    else:
 #        h_mod.remove_element(e)
 
@@ -265,9 +266,12 @@ for bone_h_base in humanoidBoneList:
         continue
 
     bone_m = meta.humanoid_bone_table[bone_h]
+    
+    # Trim whitespace and normalize bone name
+    bone_m_normalized = "{}".format(bone_m).lower().strip()
 
     try:
-        i = modelBoneNameList.index(bone_m.lower())
+        i = modelBoneNameList.index(bone_m_normalized)
     except:
         i = -1
     if (i < 0):
@@ -275,7 +279,7 @@ for bone_h_base in humanoidBoneList:
     if ("{}".format(bone_h).lower() == "upperchest"):
         continue;
 
-    humanoidBoneToModel["{}".format(bone_h).lower()] = "{}".format(bone_m).lower()
+    humanoidBoneToModel["{}".format(bone_h).lower()] = bone_m_normalized
 
     if ("{}".format(bone_h).lower() == "chest"):
         #upperchestがあれば、これの次に追加
@@ -298,6 +302,63 @@ for bone_h_base in humanoidBoneList:
             break
         print("upperchest: check end")
 
+
+# Validate and fix thumb bone mapping for VRM 0.x models
+# VRM 0.x has confusing naming: "Proximal" refers to metacarpal (first bone),
+# while anatomically it should refer to the proximal phalange (second bone).
+# This can cause controls to be mispositioned.
+#
+# Set FIX_THUMB_MAPPING_FOR_VRM0X = False to disable automatic fix
+FIX_THUMB_MAPPING_FOR_VRM0X = True
+
+print("Validating thumb bone mapping...")
+print(f"Automatic thumb mapping fix: {'ENABLED' if FIX_THUMB_MAPPING_FOR_VRM0X else 'DISABLED'}")
+
+for hand_side in ["left", "right"]:
+    thumb_proximal_key = f"{hand_side}thumbproximal"
+    thumb_intermediate_key = f"{hand_side}thumbintermediate"
+    thumb_distal_key = f"{hand_side}thumbdistal"
+    
+    if thumb_proximal_key in humanoidBoneToModel and thumb_intermediate_key in humanoidBoneToModel and thumb_distal_key in humanoidBoneToModel:
+        bone1 = humanoidBoneToModel[thumb_proximal_key]
+        bone2 = humanoidBoneToModel[thumb_intermediate_key]
+        bone3 = humanoidBoneToModel[thumb_distal_key]
+        
+        print(f"{hand_side.capitalize()} thumb mapping:")
+        print(f"  Proximal -> {bone1}")
+        print(f"  Intermediate -> {bone2}")
+        print(f"  Distal -> {bone3}")
+        
+        # Apply fix if enabled
+        if FIX_THUMB_MAPPING_FOR_VRM0X:
+            # Check if bones follow VRoid naming pattern with numbers
+            import re
+            if "thumb" in bone1 and "thumb" in bone2:
+                match1 = re.search(r'thumb[\D]*(\d+)', bone1)
+                match2 = re.search(r'thumb[\D]*(\d+)', bone2)
+                
+                if match1 and match2:
+                    num1 = int(match1.group(1))
+                    num2 = int(match2.group(1))
+                    
+                    # If Proximal is mapped to thumb2, shift everything down
+                    if num1 == 2 and num2 == 3:
+                        print(f"  ⚠ Detected off-by-one error: Proximal→thumb{num1}, Intermediate→thumb{num2}")
+                        
+                        # Look for thumb1 bone
+                        thumb1_candidates = [b for b in modelBoneNameList if re.match(r'.*thumb[\D]*1', b, re.IGNORECASE)]
+                        if thumb1_candidates:
+                            thumb1_bone = thumb1_candidates[0]
+                            print(f"  ✓ Applying fix: Proximal→{thumb1_bone}, Intermediate→{bone1}, Distal→{bone2}")
+                            humanoidBoneToModel[thumb_proximal_key] = thumb1_bone
+                            humanoidBoneToModel[thumb_intermediate_key] = bone1
+                            humanoidBoneToModel[thumb_distal_key] = bone2
+                        else:
+                            print(f"  ✗ Could not find thumb1 bone to apply fix")
+                    elif num1 == 1 and num2 == 2:
+                        print(f"  ✓ Thumb bone mapping appears correct (1, 2, 3 pattern detected)")
+
+print("Thumb validation complete.")
 
 
 parent=None
@@ -397,7 +458,21 @@ for ee in humanoidBoneToModel:
     # ロケータ 座標更新
     # 不要な上層階層を考慮
 	
-    gTransform = h_mod.get_global_transform(modelBoneListAll[modelBoneNameList.index(modelBoneNameSmall)])
+    # Get bone index with error handling
+    try:
+        boneIndex = modelBoneNameList.index(modelBoneNameSmall)
+    except ValueError:
+        print(f"ERROR: Bone '{modelBoneNameSmall}' not found in skeleton hierarchy!")
+        print(f"Available bones: {modelBoneNameList[:10]}...")  # Print first 10 for debugging
+        continue
+    
+    gTransform = h_mod.get_global_transform(modelBoneListAll[boneIndex])
+    
+    # Debug logging for thumb bones to help diagnose issues
+    if "thumb" in humanoidBone.lower():
+        print(f"Thumb bone: {humanoidBone} -> model bone: {modelBoneNameSmall} (index: {boneIndex})")
+        print(f"  Transform location: {gTransform.translation}")
+    
     if count == 0:
         bone_initial_transform = gTransform
     else:
