@@ -118,6 +118,7 @@ void UVRM4U_RenderSubsystem::Deinitialize() {
 			FLevelEditorModule& LevelEditor = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
 			LevelEditor.OnMapChanged().Remove(HandleTearDown);
 			HandleTearDown.Reset();
+			UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: Removed OnMapChanged delegate"));
 		}
 	}
 #endif
@@ -351,15 +352,17 @@ void UVRM4U_RenderSubsystem::AddCaptureTexture(UTextureRenderTarget2D* Texture, 
 
 				
 				HandleTearDown = LevelEditor.OnMapChanged().AddUObject(this, &UVRM4U_RenderSubsystem::OnMapChange);
-						/*
-					HandleTearDown = LevelEditor.OnMapChanged().AddLambda([&](UWorld* World, EMapChangeType ChangeType)
+				// Note: The following lambda pattern is unsafe and was replaced with AddUObject above.
+				// Lambda with [&] capture can cause dangling references across PIE sessions.
+				/*
+				HandleTearDown = LevelEditor.OnMapChanged().AddLambda([this](UWorld* World, EMapChangeType ChangeType)
+				{
+					if (ChangeType == EMapChangeType::TearDownWorld)
 					{
-						if (ChangeType == EMapChangeType::TearDownWorld)
-						{
-							CaptureList.Empty();
-						}
-					});
-					*/
+						CaptureList.Empty();
+					}
+				});
+				*/
 			}
 		}
 	}
