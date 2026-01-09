@@ -980,6 +980,26 @@ bool VRMConverter::ConvertModel(UVrmAssetListObject *vrmAssetList) {
 
 		sk->CalculateInvRefMatrices();
 		sk->CalculateExtendedBounds();
+		
+		// Runtime load validation: Check for potential deformation issues
+		{
+			const FReferenceSkeleton& RefSkel = VRMGetRefSkeleton(sk);
+			int32 NonUniformScaleBones = 0;
+			for (int32 BoneIdx = 0; BoneIdx < RefSkel.GetNum(); ++BoneIdx) {
+				const FTransform& BoneTransform = RefSkel.GetRefBonePose()[BoneIdx];
+				const FVector Scale = BoneTransform.GetScale3D();
+				if (!FMath::IsNearlyEqual(Scale.X, Scale.Y, 0.01f) || 
+					!FMath::IsNearlyEqual(Scale.Y, Scale.Z, 0.01f) ||
+					!FMath::IsNearlyEqual(Scale.X, Scale.Z, 0.01f)) {
+					NonUniformScaleBones++;
+				}
+			}
+			if (NonUniformScaleBones > 0) {
+				UE_LOG(LogVRM4ULoader, Warning, TEXT("[VRM4U RuntimeLoad] %d bones have non-uniform scale. This may cause mesh deformation when animated. Affected model: %s"), 
+					NonUniformScaleBones, *sk->GetName());
+			}
+		}
+		
 #if WITH_EDITOR
 #if	UE_VERSION_OLDER_THAN(4,20,0)
 #else
@@ -1167,6 +1187,24 @@ bool VRMConverter::ConvertModel(UVrmAssetListObject *vrmAssetList) {
 		}
 
 		sk->InitResources();
+		
+		// Runtime load validation: Verify resources initialized correctly
+		{
+			const FSkeletalMeshRenderData* RenderData = sk->GetResourceForRendering();
+			if (RenderData && RenderData->LODRenderData.Num() > 0) {
+				const FSkeletalMeshLODRenderData& LODData = RenderData->LODRenderData[0];
+				if (LODData.RequiredBones.Num() == 0 && LODData.RenderSections.Num() > 0) {
+					UE_LOG(LogVRM4ULoader, Warning, TEXT("[VRM4U RuntimeLoad] No required bones found but render sections exist. This may cause rendering issues. Model: %s"), *sk->GetName());
+				}
+				UE_LOG(LogVRM4ULoader, Log, TEXT("[VRM4U RuntimeLoad] Mesh initialized: %d LODs, %d sections in LOD0, %d required bones. Model: %s"), 
+					RenderData->LODRenderData.Num(), 
+					LODData.RenderSections.Num(),
+					LODData.RequiredBones.Num(),
+					*sk->GetName());
+			} else {
+				UE_LOG(LogVRM4ULoader, Warning, TEXT("[VRM4U RuntimeLoad] Render data not available after InitResources. Model: %s"), *sk->GetName());
+			}
+		}
 
 
 		if (VRMConverter::Options::Get().IsDebugNoMaterial()) {
