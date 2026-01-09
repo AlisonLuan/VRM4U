@@ -9,7 +9,7 @@ Purpose: short, focused guidance so an AI coding agent can be productive immedia
   - `VRM4URender` (render helpers)
   - `VRM4UImporter` (UncookedOnly import-time code; Windows/Mac)
   - `VRM4UEditor`, `VRM4UMisc` (editor tools)
-  - `VRM4UCapture`, `VRM4UCaptureEditor` (capture/recording tools; editor-only)
+  - `VRM4UCapture`, `VRM4UCaptureEditor` (capture/recording tools; `VRM4UCapture` runtime, `VRM4UCaptureEditor` editor-only)
 - Content assets (sample maps, materials, example blueprints) are in `Content/` (look at `Content/Maps/` and `Content/MaterialUtil/`).
 - ThirdParty libraries: `ThirdParty/assimp` (prebuilt Windows libs included), `ThirdParty/rapidjson`.
 
