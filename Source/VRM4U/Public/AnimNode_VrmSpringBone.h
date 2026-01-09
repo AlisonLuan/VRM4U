@@ -90,6 +90,12 @@ struct VRM4U_API FAnimNode_VrmSpringBone : public FAnimNode_SkeletalControlBase
 	TArray<FBoneTransform> BoneTransformsSpring;
 	bool IsSpringInit() const;
 
+private:
+	// Warning flags to avoid log spam (one warning per AnimNode instance)
+	bool bHasLoggedMetaObjectWarning = false;
+	bool bHasLoggedManagerWarning = false;
+
+public:
 	FAnimNode_VrmSpringBone();
 
 	// FAnimNode_Base interface

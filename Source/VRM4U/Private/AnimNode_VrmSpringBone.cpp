@@ -199,6 +199,11 @@ void FAnimNode_VrmSpringBone::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 	{
 
 		if (VrmMetaObject_Internal == nullptr) {
+			// Log warning only once per node instance to avoid spam
+			if (!bHasLoggedMetaObjectWarning) {
+				UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] VrmMetaObject is null. SpringBone physics cannot run. Make sure the AnimNode has a valid VrmMetaObject reference or EnableAutoSearchMetaData is true."));
+				bHasLoggedMetaObjectWarning = true;
+			}
 			return;
 		}
 		if (VRMGetSkeleton(VrmMetaObject_Internal->SkeletalMesh) != Output.AnimInstanceProxy->GetSkeleton()) {
@@ -213,6 +218,11 @@ void FAnimNode_VrmSpringBone::EvaluateSkeletalControl_AnyThread(FComponentSpaceP
 
 		{
 			if (SpringManager.Get() == nullptr) {
+				// Log warning only once per node instance to avoid spam
+				if (!bHasLoggedManagerWarning) {
+					UE_LOG(LogVRM4U, Warning, TEXT("[VRM4U SpringBone] SpringManager is null. This should not happen - initialization failed."));
+					bHasLoggedManagerWarning = true;
+				}
 				return;
 			}
 			if (SpringManager->bInit == false) {

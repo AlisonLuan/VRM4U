@@ -438,6 +438,7 @@ bool VRMConverter::ConvertVrmMeta(UVrmAssetListObject* vrmAssetList, const aiSce
 
 			auto& sMeta = MetaObject->VRM1SpringBoneMeta.Springs;
 			sMeta.SetNum(jsonSpring.Size());
+			UE_LOG(LogVRM4ULoader, Log, TEXT("[VRM4U SpringBone] Parsing VRM1 SpringBone: %d spring groups found"), jsonSpring.Size());
 			for (uint32 springNo = 0; springNo < jsonSpring.Size(); ++springNo) {
 				auto& jsonJoints = jsonSpring.GetArray()[springNo]["joints"];
 				auto& dstSpring = sMeta[springNo];
@@ -537,9 +538,17 @@ bool VRMConverter::ConvertVrmMeta(UVrmAssetListObject* vrmAssetList, const aiSce
 			//sMeta.SetNum(jsonSpring.Size());
 
 			//auto& jsonColliderGroups = jsonSpring.GetArray()[springNo]["collidergroups"];
+		} else {
+			UE_LOG(LogVRM4ULoader, Warning, TEXT("[VRM4U SpringBone] VRM1.0 model but VRMC_springBone extension not found. SpringBone physics will not work. This may indicate an older VRoid export version or non-standard VRM file."));
 		}
 	} else {
-		// spring
+		// spring VRM0
+		if (SceneMeta->springNum > 0) {
+			UE_LOG(LogVRM4ULoader, Log, TEXT("[VRM4U SpringBone] Parsing VRM0 SpringBone: %d spring groups, %d collider groups found"), 
+				SceneMeta->springNum, SceneMeta->colliderGroupNum);
+		} else {
+			UE_LOG(LogVRM4ULoader, Warning, TEXT("[VRM4U SpringBone] VRM0 model but no SpringBone data found (springNum=0). SpringBone physics will not work. This may indicate an older VRoid export version or model without secondary animation."));
+		}
 		MetaObject->VRMSpringMeta.SetNum(SceneMeta->springNum);
 		for (int i = 0; i < SceneMeta->springNum; ++i) {
 			const auto& vrms = SceneMeta->springs[i];
