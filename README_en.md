@@ -33,6 +33,9 @@ Also it can load models on runtime.
 ### Important Note for UE5.7+ Users
 UE5.7 introduced changes to the IK Rig system that affect retargeting configuration. VRM4U automatically generates version-appropriate settings. If you're migrating assets from UE5.6, see [UE57_RETARGETING_FIX.md](./UE57_RETARGETING_FIX.md) for details.
 
+### Troubleshooting
+For common issues and solutions, including PIE freeze problems in UE5.6/5.7, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
+
 ## SampleMap
 - VRM4UContent/Maps/VRM4U_sample.umap
 ![3](https://raw.githubusercontent.com/wiki/ruyo/VRM4U/images/samplemap.png)
