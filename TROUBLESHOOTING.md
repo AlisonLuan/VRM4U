@@ -2,6 +2,30 @@
 
 This document contains solutions to common issues encountered when using the VRM4U plugin.
 
+## Table of Contents
+
+- [VMC (Virtual Motion Capture) Issues](#vmc-virtual-motion-capture-issues)
+- [Editor Freezes on Second PIE Run (UE5.6/5.7)](#editor-freezes-on-second-pie-run-ue5657)
+- [Additional Resources](#additional-resources)
+
+---
+
+## VMC (Virtual Motion Capture) Issues
+
+**Common VMC problems:**
+- Character doesn't move (root position locked)
+- No VMC data received (even in sample map)
+- Works in other apps but not VRM4U
+
+**→ See the comprehensive [VMC Setup & Troubleshooting Guide](VMC_TROUBLESHOOTING.md) for:**
+- Step-by-step setup instructions
+- Root bone retargeting configuration (most common issue)
+- Network/firewall troubleshooting
+- Debug logging and diagnostics
+- FAQ and solutions
+
+---
+
 ## Editor Freezes on Second PIE Run (UE5.6/5.7)
 
 **Issue:** The Unreal Editor freezes when starting Play In Editor (PIE) for the second time after VRM4U is installed, particularly in Lyra Starter Game projects.
@@ -44,6 +68,7 @@ If you're using an older version of VRM4U and cannot update immediately:
 ## Additional Resources
 
 For more information about VRM4U:
+- [VMC Setup & Troubleshooting](VMC_TROUBLESHOOTING.md) - Complete guide for VMC protocol issues
 - [Main README](README.md)
 - [English README](README_en.md)
 - [UE5.7 Retargeting Fix](UE57_RETARGETING_FIX.md)

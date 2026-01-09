@@ -10,6 +10,16 @@
 
 DEFINE_LOG_CATEGORY(LogVRM4UCapture);
 
+// Console variable for VMC debugging
+static TAutoConsoleVariable<int32> CVarVMCDebug(
+	TEXT("vrm4u.VMC.Debug"),
+	0,
+	TEXT("Enable VMC debugging output.\n")
+	TEXT("0: Disabled (default)\n")
+	TEXT("1: Enabled - logs packet reception, port info, and diagnostics"),
+	ECVF_Default
+);
+
 //////////////////////////////////////////////////////////////////////////
 // FSpriterImporterModule
 

@@ -11,6 +11,9 @@
 #include "OSCManager.h"
 #include "OSCServer.h"
 
+// Access to VMC debug console variable
+extern TAutoConsoleVariable<int32> CVarVMCDebug;
+
 bool UVRM4U_VMCSubsystem::CopyVMCData(FVMCData &data, FString ServerAddress, int port) {
 	for (int i = 0; i < VMCObjectList.Num(); ++i) {
 		auto a = VMCObjectList[i].Get();
@@ -84,7 +87,22 @@ void UVRM4U_VMCSubsystem::DestroyVMCServerAll() {
 
 
 bool UVRM4U_VMCSubsystem::CreateVMCServer(const FString ServerAddress, int port) {
-	return (FindOrAddServer(ServerAddress, port) != nullptr);
+	bool bSuccess = (FindOrAddServer(ServerAddress, port) != nullptr);
+	
+	const bool bDebugEnabled = CVarVMCDebug.GetValueOnAnyThread() > 0;
+	if (bDebugEnabled)
+	{
+		if (bSuccess)
+		{
+			UE_LOG(LogVRM4UCapture, Log, TEXT("VMC Subsystem: VMC server created/found for %s:%d"), *ServerAddress, port);
+		}
+		else
+		{
+			UE_LOG(LogVRM4UCapture, Warning, TEXT("VMC Subsystem: Failed to create VMC server for %s:%d"), *ServerAddress, port);
+		}
+	}
+	
+	return bSuccess;
 }
 
 void UVRM4U_VMCSubsystem::ClearData(const FString ServerAddress, int port) {
