@@ -606,6 +606,11 @@ UTexture2D* VRMLoaderUtil::CreateTexture(int32 InSizeX, int32 InSizeY, FString n
 bool VRMLoaderUtil::LoadImageFromMemory(const void* vBuffer, const size_t Length, VRMUtil::FImportImage& OutImage) {
 	const char* Buffer = (const char*)vBuffer;
 
+	if (Length == 0 || Buffer == nullptr) {
+		UE_LOG(LogVRM4ULoader, Warning, TEXT("VRM4U: LoadImageFromMemory - Invalid image data (null or zero length)"));
+		return false;
+	}
+
 	IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
 	TArray<TSharedPtr<IImageWrapper> > ImageWrapperList = {
 		ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG),
