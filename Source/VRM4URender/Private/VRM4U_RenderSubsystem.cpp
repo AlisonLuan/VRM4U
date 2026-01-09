@@ -1,3 +1,5 @@
+// VRM4U Copyright (c) 2021-2024 Haruyoshi Yamamoto. This software is released under the MIT License.
+
 #include "VRM4U_RenderSubsystem.h"
 #include "VRM4URenderLog.h"
 #include "VrmExtensionRimFilterData.h"
@@ -117,9 +119,11 @@ void UVRM4U_RenderSubsystem::Deinitialize() {
 		{
 			FLevelEditorModule& LevelEditor = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
 			LevelEditor.OnMapChanged().Remove(HandleTearDown);
-			HandleTearDown.Reset();
 			UE_LOG(LogVRM4URender, Log, TEXT("VRM4U_RenderSubsystem: Removed OnMapChanged delegate"));
 		}
+
+		// Always reset the handle to avoid leaving a dangling delegate handle
+		HandleTearDown.Reset();
 	}
 #endif
 

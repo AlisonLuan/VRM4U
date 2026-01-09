@@ -16,7 +16,7 @@ This document contains solutions to common issues encountered when using the VRM
 Multiple delegate lifecycle management issues caused delegates to be registered multiple times without proper cleanup between PIE sessions, leading to dangling references and deadlocks.
 
 **Fix:**
-This issue has been fixed in commit `b0004e5` (January 2026). The fix includes:
+This issue has been fixed in VRM4U builds released after January 2026 (see GitHub Issue #555 for details). The fix includes:
 - Proper delegate handle management in VRM4UImporterModule
 - Safe lambda captures and cleanup in VRM4U_RenderSubsystem
 - Complete delegate cleanup in VRM4U_VMCSubsystem
