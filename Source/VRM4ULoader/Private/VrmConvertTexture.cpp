@@ -776,7 +776,7 @@ bool VRMConverter::ConvertTextureAndMaterial(UVrmAssetListObject *vrmAssetList) 
 #endif
 
 				if (NormalBoolTable[i]) {
-					// UE5.5�ŃN���b�V������̂� update��ɍēx�X�V
+					// In UE 5.5, normal-map compression must be applied after the initial update, so update the resource again.
 					NewTexture2D->CompressionSettings = TC_Normalmap;
 					NewTexture2D->UpdateResource();
 #if WITH_EDITOR
