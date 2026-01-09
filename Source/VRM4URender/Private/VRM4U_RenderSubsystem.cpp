@@ -88,18 +88,55 @@ void UVRM4U_RenderSubsystem::Initialize(FSubsystemCollectionBase& Collection) {
 	Super::Initialize(Collection);
 
 	SceneViewExtension = FSceneViewExtensions::NewExtension<FVrmSceneViewExtension>();
-	GetRendererModule().RegisterPostOpaqueRenderDelegate(FPostOpaqueRenderDelegate::CreateUObject(this, &UVRM4U_RenderSubsystem::OnPostOpaque));
-	GetRendererModule().RegisterOverlayRenderDelegate(FPostOpaqueRenderDelegate::CreateUObject(this, &UVRM4U_RenderSubsystem::OnOverlay));
+	HandlePostOpaqueRender = GetRendererModule().RegisterPostOpaqueRenderDelegate(FPostOpaqueRenderDelegate::CreateUObject(this, &UVRM4U_RenderSubsystem::OnPostOpaque));
+	HandleOverlayRender = GetRendererModule().RegisterOverlayRenderDelegate(FPostOpaqueRenderDelegate::CreateUObject(this, &UVRM4U_RenderSubsystem::OnOverlay));
 	
 	//GetRendererModule().GetResolvedSceneColorCallbacks().AddUObject(this, &UVRM4U_RenderSubsystem::OnResolvedSceneColor_RenderThread);
 }
 
 void UVRM4U_RenderSubsystem::Deinitialize() {
 
+#if WITH_EDITOR
+	// Unregister PIE delegates
+	if (HandleBeginPIE.IsValid()) {
+		FEditorDelegates::BeginPIE.Remove(HandleBeginPIE);
+		HandleBeginPIE.Reset();
+	}
+	if (HandleEndPIE.IsValid()) {
+		FEditorDelegates::EndPIE.Remove(HandleEndPIE);
+		HandleEndPIE.Reset();
+	}
+
+	// Unregister map change delegate
+	if (HandleTearDown.IsValid()) {
+		if (FModuleManager::Get().IsModuleLoaded("LevelEditor"))
+		{
+			FLevelEditorModule& LevelEditor = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
+			LevelEditor.OnMapChanged().Remove(HandleTearDown);
+			HandleTearDown.Reset();
+		}
+	}
+#endif
+
+	// Unregister render delegates
+	if (HandlePostOpaqueRender.IsValid()) {
+		GetRendererModule().RemovePostOpaqueRenderDelegate(HandlePostOpaqueRender);
+		HandlePostOpaqueRender.Reset();
+	}
+	if (HandleOverlayRender.IsValid()) {
+		GetRendererModule().RemoveOverlayRenderDelegate(HandleOverlayRender);
+		HandleOverlayRender.Reset();
+	}
+
 	{
 		FScopeLock lock(&cs_rim);
 		RimFilterData.Empty();
 	}
+
+	// Reset PIE state
+	bInitPIE = false;
+	bIsPlay = false;
+
 	Super::Deinitialize();
 }
 
@@ -325,12 +362,12 @@ void UVRM4U_RenderSubsystem::AddCaptureTexture(UTextureRenderTarget2D* Texture, 
 
 	if (bInitPIE == false) {
 		bInitPIE = true;
-		FEditorDelegates::BeginPIE.AddLambda([&](const bool bIsSimulating) {
+		HandleBeginPIE = FEditorDelegates::BeginPIE.AddLambda([this](const bool bIsSimulating) {
 			this->OnPIEEvent(true, false);
-			});
-		FEditorDelegates::EndPIE.AddLambda([&](const bool bIsSimulating) {
+		});
+		HandleEndPIE = FEditorDelegates::EndPIE.AddLambda([this](const bool bIsSimulating) {
 			this->OnPIEEvent(false, true);
-			});
+		});
 	}
 #else
 	bIsPlay = true;

@@ -27,6 +27,8 @@ DEFINE_LOG_CATEGORY(LogVRM4UImporter);
 class FVRM4UImporterModule : public FDefaultModuleImpl
 {
 	TArray< TSharedPtr<IAssetTypeActions> >  AssetTypeActions;
+	FDelegateHandle OnAssetPostImportHandle;
+	FDelegateHandle OnAssetReimportHandle;
 
 public:
 
@@ -43,8 +45,8 @@ public:
 		{
 #if	UE_VERSION_OLDER_THAN(4,22,0)
 #else
-			GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.AddRaw(this, &FVRM4UImporterModule::OnObjectImported);
-			GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetReimport.AddRaw(this, &FVRM4UImporterModule::OnObjectReimported);
+			OnAssetPostImportHandle = GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.AddRaw(this, &FVRM4UImporterModule::OnObjectImported);
+			OnAssetReimportHandle = GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetReimport.AddRaw(this, &FVRM4UImporterModule::OnObjectReimported);
 #endif
 		}
 	}
@@ -95,6 +97,20 @@ public:
 	virtual void ShutdownModule() override
 	{
 		if (UObjectInitialized()){
+			// Unregister import delegates
+#if !UE_VERSION_OLDER_THAN(4,22,0)
+			if (GEditor && OnAssetPostImportHandle.IsValid())
+			{
+				GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.Remove(OnAssetPostImportHandle);
+				OnAssetPostImportHandle.Reset();
+			}
+			if (GEditor && OnAssetReimportHandle.IsValid())
+			{
+				GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetReimport.Remove(OnAssetReimportHandle);
+				OnAssetReimportHandle.Reset();
+			}
+#endif
+
 			UThumbnailManager::Get().UnregisterCustomRenderer(UVrmAssetListObject::StaticClass());
 			UThumbnailManager::Get().UnregisterCustomRenderer(UVrmLicenseObject::StaticClass());
 			UThumbnailManager::Get().UnregisterCustomRenderer(UVrm1LicenseObject::StaticClass());

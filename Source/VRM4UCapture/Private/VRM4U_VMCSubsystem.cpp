@@ -102,12 +102,25 @@ void UVRM4U_VMCSubsystem::Initialize(FSubsystemCollectionBase& Collection) {
 	Super::Initialize(Collection);
 
 #if WITH_EDITOR
-	FEditorDelegates::BeginStandaloneLocalPlay.AddLambda([&](const uint32 processID) {
+	HandleBeginStandaloneLocalPlay = FEditorDelegates::BeginStandaloneLocalPlay.AddLambda([this](const uint32 processID) {
 		this->DestroyVMCServerAll();
 	});
 #endif
 
 }
 
+void UVRM4U_VMCSubsystem::Deinitialize() {
 
+#if WITH_EDITOR
+	// Unregister standalone play delegate
+	if (HandleBeginStandaloneLocalPlay.IsValid()) {
+		FEditorDelegates::BeginStandaloneLocalPlay.Remove(HandleBeginStandaloneLocalPlay);
+		HandleBeginStandaloneLocalPlay.Reset();
+	}
+#endif
 
+	// Clean up all VMC servers
+	DestroyVMCServerAll();
+
+	Super::Deinitialize();
+}

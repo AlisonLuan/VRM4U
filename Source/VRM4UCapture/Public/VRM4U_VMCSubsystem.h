@@ -50,6 +50,8 @@ public:
 
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
 
 private:
+	FDelegateHandle HandleBeginStandaloneLocalPlay;
 };
