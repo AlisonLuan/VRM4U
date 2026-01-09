@@ -36,7 +36,22 @@ If you have VRM assets imported in UE5.6 that exhibit broken leg/foot animations
 
 VRM4U provides a Blueprint-callable editor utility function to update existing IK Rigs:
 
-#### Via Blueprint (Editor Utility Widget):
+#### Quick Method: Run the Python Script
+
+The easiest way to migrate multiple assets is using the provided Python script:
+
+1. Open your UE5.7+ project in Unreal Editor
+2. Enable Python scripting if not already enabled:
+   - Edit > Plugins > Search for "Python Editor Script Plugin" > Enable and restart
+3. Open the Output Log: Window > Developer Tools > Output Log
+4. Run the migration script:
+   - Tools > Execute Python Script...
+   - Navigate to `Plugins/VRM4U/Content/Python/VRM4U_FixIKRigUE57.py`
+   - Click "Open" to execute
+
+The script will automatically find and fix all VRM IK Rig assets in your project.
+
+#### Manual Method: Via Blueprint (Editor Utility Widget):
 
 ```cpp
 // Create an Editor Utility Widget or Editor Utility Blueprint
@@ -44,7 +59,7 @@ VRM4U provides a Blueprint-callable editor utility function to update existing I
 bool Success = VrmEditorBPFunctionLibrary::FixIKRigForUE57Retargeting(YourIKRigAsset);
 ```
 
-#### Via Python Script:
+#### Manual Method: Via Python Console:
 
 ```python
 import unreal
