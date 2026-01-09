@@ -92,9 +92,32 @@ bool UVrmEditorBPFunctionLibrary::FixIKRigForUE57Retargeting(UIKRigDefinition* I
 
     bool bModified = false;
     
+    // Helper lambda to convert toe goal/bone names to foot equivalents
+    auto ConvertToeToFoot = [](const FString& InName) -> FString {
+        FString OutName = InName;
+        OutName.ReplaceInline(TEXT("Toes"), TEXT("Foot"));
+        OutName.ReplaceInline(TEXT("toes"), TEXT("foot"));
+        return OutName;
+    };
+    
+    // Helper lambda to convert foot goal/bone names back to toe equivalents
+    auto ConvertFootToToe = [](const FString& InName) -> FString {
+        FString OutName = InName;
+        OutName.ReplaceInline(TEXT("Foot"), TEXT("Toes"));
+        OutName.ReplaceInline(TEXT("foot"), TEXT("toes"));
+        return OutName;
+    };
+    
+    // Helper lambda to check if a goal is toe-based
+    auto IsToeBasedGoal = [](const FString& GoalName, const FString& BoneName) -> bool {
+        return ((GoalName.Contains(TEXT("Toes")) || GoalName.Contains(TEXT("Toe"))) && 
+                (BoneName.Contains(TEXT("Toes")) || BoneName.Contains(TEXT("toes"))));
+    };
+    
     // Find and update toe-based goals to foot-based goals
     TArray<FName> GoalsToRemove;
     TMap<FName, FName> GoalBoneMapping; // Old goal name -> new bone name
+    TMap<FName, FName> NewToOldGoalMapping; // New goal name -> old goal name (for reverse lookup)
     
     const TArray<UIKRigEffectorGoal*>& Goals = IKRigAsset->GetGoalArray();
     for (UIKRigEffectorGoal* Goal : Goals)
@@ -105,36 +128,17 @@ bool UVrmEditorBPFunctionLibrary::FixIKRigForUE57Retargeting(UIKRigDefinition* I
         FString BoneName = Goal->BoneName.ToString();
         
         // Check if this is a toe-based IK goal that should be changed to foot
-        if ((GoalName.Contains(TEXT("leftToes")) || GoalName.Contains(TEXT("LeftToe"))) && 
-            (BoneName.Contains(TEXT("Toes")) || BoneName.Contains(TEXT("toes"))))
+        if (IsToeBasedGoal(GoalName, BoneName))
         {
-            // Find corresponding foot bone
-            FString FootBoneName = BoneName;
-            FootBoneName.ReplaceInline(TEXT("Toes"), TEXT("Foot"));
-            FootBoneName.ReplaceInline(TEXT("toes"), TEXT("foot"));
+            FString FootBoneName = ConvertToeToFoot(BoneName);
+            FString FootGoalName = ConvertToeToFoot(GoalName);
             
             GoalsToRemove.Add(Goal->GoalName);
-            FName NewGoalName = *GoalName.Replace(TEXT("Toes"), TEXT("Foot"));
-            GoalBoneMapping.Add(NewGoalName, *FootBoneName);
+            GoalBoneMapping.Add(*FootGoalName, *FootBoneName);
+            NewToOldGoalMapping.Add(*FootGoalName, Goal->GoalName);
             
             UE_LOG(LogTemp, Log, TEXT("  - Will replace goal '%s' (bone: %s) with '%s' (bone: %s)"), 
-                   *GoalName, *BoneName, *NewGoalName.ToString(), *FootBoneName);
-            bModified = true;
-        }
-        else if ((GoalName.Contains(TEXT("rightToes")) || GoalName.Contains(TEXT("RightToe"))) && 
-                 (BoneName.Contains(TEXT("Toes")) || BoneName.Contains(TEXT("toes"))))
-        {
-            // Find corresponding foot bone
-            FString FootBoneName = BoneName;
-            FootBoneName.ReplaceInline(TEXT("Toes"), TEXT("Foot"));
-            FootBoneName.ReplaceInline(TEXT("toes"), TEXT("foot"));
-            
-            GoalsToRemove.Add(Goal->GoalName);
-            FName NewGoalName = *GoalName.Replace(TEXT("Toes"), TEXT("Foot"));
-            GoalBoneMapping.Add(NewGoalName, *FootBoneName);
-            
-            UE_LOG(LogTemp, Log, TEXT("  - Will replace goal '%s' (bone: %s) with '%s' (bone: %s)"), 
-                   *GoalName, *BoneName, *NewGoalName.ToString(), *FootBoneName);
+                   *GoalName, *BoneName, *FootGoalName, *FootBoneName);
             bModified = true;
         }
     }
@@ -192,22 +196,28 @@ bool UVrmEditorBPFunctionLibrary::FixIKRigForUE57Retargeting(UIKRigDefinition* I
             UE_LOG(LogTemp, Log, TEXT("  - Created new goal: %s on bone: %s"), *NewGoalName.ToString(), *NewBoneName.ToString());
             
             // Reconnect to solver if it was connected before
-            FName OldGoalName = *NewGoalName.ToString().Replace(TEXT("Foot"), TEXT("Toes"));
-            if (GoalSolverConnections.Contains(OldGoalName))
+            // Use the reverse mapping to find the old goal name
+            if (const FName* OldGoalNamePtr = NewToOldGoalMapping.Find(NewGoalName))
             {
-                int32 SolverIndex = GoalSolverConnections[OldGoalName];
-                Controller->ConnectGoalToSolver(CreatedGoal, SolverIndex);
-                UE_LOG(LogTemp, Log, TEXT("  - Connected goal %s to solver %d"), *CreatedGoal.ToString(), SolverIndex);
+                if (GoalSolverConnections.Contains(*OldGoalNamePtr))
+                {
+                    int32 SolverIndex = GoalSolverConnections[*OldGoalNamePtr];
+                    Controller->ConnectGoalToSolver(CreatedGoal, SolverIndex);
+                    UE_LOG(LogTemp, Log, TEXT("  - Connected goal %s to solver %d"), *CreatedGoal.ToString(), SolverIndex);
+                }
             }
             
             // Reassign to retarget chains
             for (const auto& ChainAssignment : ChainGoalAssignments)
             {
-                FName OldGoalForChain = *NewGoalName.ToString().Replace(TEXT("Foot"), TEXT("Toes"));
-                if (ChainAssignment.Value == OldGoalForChain)
+                // Use the reverse mapping to find the old goal name
+                if (const FName* OldGoalNamePtr = NewToOldGoalMapping.Find(NewGoalName))
                 {
-                    Controller->SetRetargetChainGoal(ChainAssignment.Key, CreatedGoal);
-                    UE_LOG(LogTemp, Log, TEXT("  - Assigned goal %s to chain %s"), *CreatedGoal.ToString(), *ChainAssignment.Key.ToString());
+                    if (ChainAssignment.Value == *OldGoalNamePtr)
+                    {
+                        Controller->SetRetargetChainGoal(ChainAssignment.Key, CreatedGoal);
+                        UE_LOG(LogTemp, Log, TEXT("  - Assigned goal %s to chain %s"), *CreatedGoal.ToString(), *ChainAssignment.Key.ToString());
+                    }
                 }
             }
         }

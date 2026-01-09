@@ -81,8 +81,28 @@ def main():
     for asset_data in vrm_ik_rigs:
         unreal.log(f"  - {asset_data.package_name}")
     
-    # Ask for confirmation (in editor UI if possible)
-    user_confirmed = True  # In a real script, you'd use a UI dialog
+    # Interactive confirmation
+    # Note: UE Python doesn't have built-in UI dialogs. In production, you might:
+    # 1. Use an Editor Utility Widget to show a proper confirmation dialog
+    # 2. Require a command-line flag/argument to proceed
+    # 3. Have users modify this variable before running the script
+    
+    # For safety, default to False - users must explicitly enable auto-processing
+    auto_confirm = False  # Change this to True to skip confirmation, or modify below
+    
+    if auto_confirm:
+        user_confirmed = True
+        unreal.log("\nAuto-confirm enabled - proceeding with migration...")
+    else:
+        unreal.log("\n" + "!" * 80)
+        unreal.log("WARNING: This script will modify IK Rig assets in your project!")
+        unreal.log("Please ensure you have a backup before proceeding.")
+        unreal.log("")
+        unreal.log("To proceed:")
+        unreal.log("  1. Set 'auto_confirm = True' in the script, OR")
+        unreal.log("  2. Call this script with confirmation handled by an Editor Utility Widget")
+        unreal.log("!" * 80)
+        user_confirmed = False
     
     if not user_confirmed:
         unreal.log("Migration cancelled by user.")

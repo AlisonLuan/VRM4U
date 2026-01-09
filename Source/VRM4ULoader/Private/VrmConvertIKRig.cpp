@@ -138,11 +138,11 @@ namespace {
 #endif
 			}
 
-			if (table_no == 0){
+			if (table_no == 0) {
 				// not change - toe-based goals
-			}else if (table_no == 1){
+			} else if (table_no == 1) {
 				// foot-based goals
-				TArray < FString > tmp = {
+				TArray<FString> tmp = {
 					TEXT("leftHand"),
 					TEXT("rightHand"),
 					TEXT("leftFoot"),
@@ -156,7 +156,7 @@ namespace {
 				// BVH model bone names
 				if (table_no == 0) {
 					// UE5.6 and earlier: toe-based goals
-					TArray < FString > tmp = {
+					TArray<FString> tmp = {
 						TEXT("l_hand"),
 						TEXT("r_hand"),
 						TEXT("l_toes"),
@@ -165,7 +165,7 @@ namespace {
 					a = tmp;
 				} else if (table_no == 1) {
 					// UE5.7+: foot-based goals
-					TArray < FString > tmp = {
+					TArray<FString> tmp = {
 						TEXT("l_hand"),
 						TEXT("r_hand"),
 						TEXT("l_foot"),
