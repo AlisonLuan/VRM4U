@@ -113,7 +113,7 @@ void UVrmVMCObject::OSCReceivedMessageEvent(const FOSCMessage& Message, const FS
 			LastCurveCount = VMCData_Cache.CurveData.Num();
 			
 			const bool bDebugEnabled = CVarVMCDebug.GetValueOnAnyThread() > 0;
-			if (bDebugEnabled && TotalPacketsReceived % 100 == 1) // Log every 100th packet to avoid spam
+			if (bDebugEnabled && TotalPacketsReceived % 100 == 1) // Log on packet 1, then every 100th packet thereafter (101, 201, ...) to avoid spam
 			{
 				UE_LOG(LogVRM4UCapture, Log, TEXT("VMC: Received packet #%d from %s:%d - Bones: %d, Curves: %d, Has Root: %s"),
 					TotalPacketsReceived, *IPAddress, Port, LastBoneCount, LastCurveCount, 

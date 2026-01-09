@@ -67,10 +67,25 @@ public:
 	bool CopyVMCData(FVMCData& dst);
 	void ClearVMCData();
 
-	// Diagnostic methods
-	int32 GetTotalPacketsReceived() const { return TotalPacketsReceived; }
-	double GetLastPacketReceivedTime() const { return LastPacketReceivedTime; }
-	bool HasReceivedRootTranslation() const { return bHasReceivedRootTranslation; }
-	int32 GetLastBoneCount() const { return LastBoneCount; }
-	int32 GetLastCurveCount() const { return LastCurveCount; }
+	// Diagnostic methods - thread-safe access with critical section
+	int32 GetTotalPacketsReceived() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return TotalPacketsReceived; 
+	}
+	double GetLastPacketReceivedTime() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return LastPacketReceivedTime; 
+	}
+	bool HasReceivedRootTranslation() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return bHasReceivedRootTranslation; 
+	}
+	int32 GetLastBoneCount() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return LastBoneCount; 
+	}
+	int32 GetLastCurveCount() const { 
+		FScopeLock lock(&const_cast<FCriticalSection&>(cs)); 
+		return LastCurveCount; 
+	}
 };

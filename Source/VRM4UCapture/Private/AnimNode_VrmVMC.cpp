@@ -141,9 +141,8 @@ void FAnimNode_VrmVMC::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCont
 
 	if (VMCData.BoneData.Num() == 0 && VMCData.CurveData.Num() == 0) {
 		const bool bDebugEnabled = CVarVMCDebug.GetValueOnAnyThread() > 0;
-		// Note: Using thread-safe atomic counter to track if we've logged
-		static FThreadSafeCounter LogOnceCounter;
-		if (bDebugEnabled && LogOnceCounter.GetValue() == 0)
+		// Note: Throttle logging globally based on the engine frame counter to log once per second
+		if (bDebugEnabled && (GFrameCounter % 60 == 0))
 		{
 			// Find the VMC object to get diagnostics
 			auto* vmcObj = subsystem->FindOrAddServer(ServerAddress, Port);
@@ -151,7 +150,6 @@ void FAnimNode_VrmVMC::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCont
 			{
 				UE_LOG(LogVRM4UCapture, Warning, TEXT("VMC AnimNode: Packets are being received (count: %d) but no bone/curve data is parsed. Possible protocol mismatch or data format issue."), 
 					vmcObj->GetTotalPacketsReceived());
-				LogOnceCounter.Increment();
 			}
 		}
 		return;
@@ -318,10 +316,9 @@ void FAnimNode_VrmVMC::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCont
 		auto* vmcObj = subsystem->FindOrAddServer(ServerAddress, Port);
 		if (vmcObj && vmcObj->HasReceivedRootTranslation() && bUseRemoteCenterPos)
 		{
-			// Note: Using thread-safe counter for throttling across all threads
-			static FThreadSafeCounter LogCounter;
-			const int32 CurrentCount = LogCounter.Increment();
-			if (CurrentCount % 300 == 1) // Log approximately every ~5 seconds at 60fps
+			// Note: Throttle logging globally based on the engine frame counter
+			const uint64 CurrentFrame = GFrameCounter;
+			if (CurrentFrame % 300 == 1) // Log approximately every ~5 seconds at 60fps
 			{
 				UE_LOG(LogVRM4UCapture, Display, TEXT("VMC AnimNode: Root translation data is being received and processed. If character is not moving, check Skeleton's Root Bone Translation Retargeting mode (should be 'Skeleton' not 'Animation')."));
 			}

@@ -153,18 +153,20 @@ Manual test plan for verification:
 ## Files Changed Summary
 
 ```
-Source/VRM4UCapture/Private/AnimNode_VrmVMC.cpp    |  42 additions
+Source/VRM4UCapture/Private/AnimNode_VrmVMC.cpp    |  44 additions
 Source/VRM4UCapture/Private/VRM4UCapture.cpp       |  10 additions
+Source/VRM4UCapture/Private/VRM4UCapture.h         |   3 additions
 Source/VRM4UCapture/Private/VRM4U_VMCSubsystem.cpp |  20 additions
 Source/VRM4UCapture/Private/VrmVMCObject.cpp       |  39 additions
 Source/VRM4UCapture/Public/VrmVMCObject.h          |  15 additions
+README.md                                          |   3 additions
+README_en.md                                       |   2 additions
 TROUBLESHOOTING.md                                 |  25 additions
 VMC_TEST_PLAN.md                                   | 272 new file
 VMC_TROUBLESHOOTING.md                             | 250 new file
-README.md                                          |   3 additions
-README_en.md                                       |   2 additions
+IMPLEMENTATION_SUMMARY.md                          | 215 new file
 
-Total: 10 files changed, 673 insertions(+), 5 deletions(-)
+Total: 12 files changed, 898 insertions(+), 9 deletions(-)
 ```
 
 ## User Impact
