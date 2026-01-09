@@ -9,15 +9,17 @@ Purpose: short, focused guidance so an AI coding agent can be productive immedia
   - `VRM4URender` (render helpers)
   - `VRM4UImporter` (UncookedOnly import-time code; Windows/Mac)
   - `VRM4UEditor`, `VRM4UMisc` (editor tools)
+  - `VRM4UCapture`, `VRM4UCaptureEditor` (capture/recording tools; `VRM4UCapture` runtime, `VRM4UCaptureEditor` editor-only)
 - Content assets (sample maps, materials, example blueprints) are in `Content/` (look at `Content/Maps/` and `Content/MaterialUtil/`).
 - ThirdParty libraries: `ThirdParty/assimp` (prebuilt Windows libs included), `ThirdParty/rapidjson`.
 
 ## Developer workflows — build, package, debug 🚀
 - Release packaging is scripted in `Source/ReleaseScript/`:
   - Use `build_5.bat` to build the common UE5 targets.
-  - `build_all.bat` runs `build_5.bat` then legacy builds.
+  - `build_all.bat` runs `build_5.bat` and then legacy builds.
   - `build_ver2.bat <UEVER> <Platform> <Config> <ZipName>` runs UAT BuildPlugin and then compresses output.
-    - Example: `call Source\ReleaseScript\build_ver2.bat 5.7 Win64 Shipping VRM4U_5_7_YYYYMMDD.zip`
+    - Example: `call Source\ReleaseScript\build_ver2.bat 5.7 Win64 Shipping VRM4U_5_7_20250109.zip`
+    - When invoked from `build_5.bat`, the `<ZipName>` argument is automatically populated with a `VRM4U_..._YYYYMMDD.zip` name using the system date via the `V_DATE` variable.
 - Important: `build_ver2.bat` assumes Epic Games installs under `D:\Program Files\Epic Games`. Modify the script if your UE installs elsewhere.
 - The build script contains engine-specific conditionals (e.g., it deletes retargeter or render module files for older UE versions). When changing features, update `build_ver2.bat` accordingly.
 - Running locally for development: copy plugin to your project's `Plugins/VRM4U` folder (next to `.uproject`) and open the project in Unreal Editor. Use Visual Studio to build and attach to the UE Editor process for native debugging.
