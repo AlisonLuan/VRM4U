@@ -313,7 +313,13 @@ for bone_h_base in humanoidBoneList:
 # VRM 0.x has confusing naming: "Proximal" refers to metacarpal (first bone),
 # while anatomically it should refer to the proximal phalange (second bone).
 # This can cause controls to be mispositioned.
+#
+# Set FIX_THUMB_MAPPING_FOR_VRM0X = False to disable automatic fix
+FIX_THUMB_MAPPING_FOR_VRM0X = True
+
 print("Validating thumb bone mapping...")
+print(f"Automatic thumb mapping fix: {'ENABLED' if FIX_THUMB_MAPPING_FOR_VRM0X else 'DISABLED'}")
+
 for hand_side in ["left", "right"]:
     thumb_proximal_key = f"{hand_side}thumbproximal"
     thumb_intermediate_key = f"{hand_side}thumbintermediate"
@@ -329,25 +335,35 @@ for hand_side in ["left", "right"]:
         print(f"  Intermediate -> {bone2}")
         print(f"  Distal -> {bone3}")
         
-        # Check if bones follow expected numbering pattern (e.g., thumb1, thumb2, thumb3)
-        # If the bones are named with numbers, verify they're in order
-        if "thumb" in bone1 and "thumb" in bone2 and "thumb" in bone3:
-            # Extract trailing digits if present
+        # Apply fix if enabled
+        if FIX_THUMB_MAPPING_FOR_VRM0X:
+            # Check if bones follow VRoid naming pattern with numbers
             import re
-            match1 = re.search(r'thumb[\D]*(\d+)', bone1)
-            match2 = re.search(r'thumb[\D]*(\d+)', bone2)
-            match3 = re.search(r'thumb[\D]*(\d+)', bone3)
-            
-            if match1 and match2 and match3:
-                num1 = int(match1.group(1))
-                num2 = int(match2.group(1))
-                num3 = int(match3.group(1))
+            if "thumb" in bone1 and "thumb" in bone2:
+                match1 = re.search(r'thumb[\D]*(\d+)', bone1)
+                match2 = re.search(r'thumb[\D]*(\d+)', bone2)
                 
-                expected_order = (num1 < num2 < num3) or (num1 == 1 and num2 == 2 and num3 == 3)
-                if not expected_order:
-                    print(f"  WARNING: Thumb bones may be out of order! ({num1}, {num2}, {num3})")
-                else:
-                    print(f"  Thumb bone numbering looks correct ({num1}, {num2}, {num3})")
+                if match1 and match2:
+                    num1 = int(match1.group(1))
+                    num2 = int(match2.group(1))
+                    
+                    # If Proximal is mapped to thumb2, shift everything down
+                    if num1 == 2 and num2 == 3:
+                        print(f"  ⚠ Detected off-by-one error: Proximal→thumb{num1}, Intermediate→thumb{num2}")
+                        
+                        # Look for thumb1 bone
+                        thumb1_candidates = [b for b in modelBoneNameList if re.match(r'.*thumb[\D]*1', b, re.IGNORECASE)]
+                        if thumb1_candidates:
+                            thumb1_bone = thumb1_candidates[0]
+                            print(f"  ✓ Applying fix: Proximal→{thumb1_bone}, Intermediate→{bone1}, Distal→{bone2}")
+                            humanoidBoneToModel[thumb_proximal_key] = thumb1_bone
+                            humanoidBoneToModel[thumb_intermediate_key] = bone1
+                            humanoidBoneToModel[thumb_distal_key] = bone2
+                        else:
+                            print(f"  ✗ Could not find thumb1 bone to apply fix")
+                    elif num1 == 1 and num2 == 2:
+                        print(f"  ✓ Thumb bone mapping appears correct (1, 2, 3 pattern detected)")
+
 print("Thumb validation complete.")
 
 
