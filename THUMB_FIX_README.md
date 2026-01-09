@@ -66,12 +66,12 @@ The automatic fix is **enabled by default**. To disable it (if needed):
 After generating a Control Rig with the fix:
 
 1. Open the Control Rig editor
-2. Select thumb controls (`thumb_01_l_ctrl`, `thumb_02_l_ctrl`, `thumb_03_l_ctrl`)
-3. Verify each control is positioned at its corresponding bone:
-   - `thumb_01_l_ctrl` should be at `thumb_01_l` bone (or `j_bip_l_thumb1`)
-   - `thumb_02_l_ctrl` should be at `thumb_02_l` bone (or `j_bip_l_thumb2`)
-   - `thumb_03_l_ctrl` should be at `thumb_03_l` bone (or `j_bip_l_thumb3`)
-4. Repeat for right hand controls
+2. Select thumb controls (named with pattern `{humanoidBone}_c`, e.g., `leftthumbproximal_c`, `leftthumbintermediate_c`, `leftthumbdistal_c`)
+3. Verify each control is positioned at its corresponding humanoid thumb bone:
+   - `leftthumbproximal_c` should be at the first thumb bone (e.g., `j_bip_l_thumb1` or `thumb_01_l`)
+   - `leftthumbintermediate_c` should be at the second thumb bone (e.g., `j_bip_l_thumb2` or `thumb_02_l`)
+   - `leftthumbdistal_c` should be at the third thumb bone (e.g., `j_bip_l_thumb3` or `thumb_03_l`)
+4. Repeat for right hand controls (e.g., `rightthumbproximal_c`, `rightthumbintermediate_c`, `rightthumbdistal_c`)
 
 ## Testing Animation Baking
 

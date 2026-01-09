@@ -1,5 +1,6 @@
 ﻿# coding: utf-8
 import unreal
+import re
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -272,7 +273,7 @@ for bone_h_base in humanoidBoneList:
 
     try:
         i = modelBoneNameList.index(bone_m_normalized)
-    except:
+    except ValueError:
         i = -1
     if (i < 0):
         continue
@@ -332,7 +333,6 @@ for hand_side in ["left", "right"]:
         # Apply fix if enabled
         if FIX_THUMB_MAPPING_FOR_VRM0X:
             # Check if bones follow VRoid naming pattern with numbers
-            import re
             if "thumb" in bone1 and "thumb" in bone2:
                 match1 = re.search(r'thumb[\D]*(\d+)', bone1)
                 match2 = re.search(r'thumb[\D]*(\d+)', bone2)
@@ -341,22 +341,28 @@ for hand_side in ["left", "right"]:
                     num1 = int(match1.group(1))
                     num2 = int(match2.group(1))
                     
-                    # If Proximal is mapped to thumb2, shift everything down
-                    if num1 == 2 and num2 == 3:
-                        print(f"  ⚠ Detected off-by-one error: Proximal→thumb{num1}, Intermediate→thumb{num2}")
-                        
-                        # Look for thumb1 bone
-                        thumb1_candidates = [b for b in modelBoneNameList if re.match(r'.*thumb[\D]*1', b, re.IGNORECASE)]
-                        if thumb1_candidates:
-                            thumb1_bone = thumb1_candidates[0]
-                            print(f"  ✓ Applying fix: Proximal→{thumb1_bone}, Intermediate→{bone1}, Distal→{bone2}")
-                            humanoidBoneToModel[thumb_proximal_key] = thumb1_bone
-                            humanoidBoneToModel[thumb_intermediate_key] = bone1
-                            humanoidBoneToModel[thumb_distal_key] = bone2
-                        else:
-                            print(f"  ✗ Could not find thumb1 bone to apply fix")
-                    elif num1 == 1 and num2 == 2:
-                        print(f"  ✓ Thumb bone mapping appears correct (1, 2, 3 pattern detected)")
+                    # Validate that extracted indices are within expected VRoid thumb range (1-3)
+                    if not (1 <= num1 <= 3 and 1 <= num2 <= 3):
+                        print(f"  ⚠ Detected unexpected thumb index values: Proximal→thumb{num1}, Intermediate→thumb{num2} (skipping auto-fix)")
+                    else:
+                        # If Proximal is mapped to thumb2, shift everything down
+                        if num1 == 2 and num2 == 3:
+                            print(f"  ⚠ Detected off-by-one error: Proximal→thumb{num1}, Intermediate→thumb{num2}")
+                            
+                            # Look for thumb1 bone (ensure we don't match thumb11, thumb21, etc.)
+                            thumb1_candidates = [b for b in modelBoneNameList if re.match(r'.*thumb[\D]*1(?:\D|$)', b, re.IGNORECASE)]
+                            if thumb1_candidates:
+                                # Prefer bones without suffix modifiers like "_twist" or "_helper"
+                                simple_candidates = [b for b in thumb1_candidates if not any(suffix in b for suffix in ['_twist', '_helper', '_ik', '_fk'])]
+                                thumb1_bone = simple_candidates[0] if simple_candidates else thumb1_candidates[0]
+                                print(f"  ✓ Applying fix: Proximal→{thumb1_bone}, Intermediate→{bone1}, Distal→{bone2}")
+                                humanoidBoneToModel[thumb_proximal_key] = thumb1_bone
+                                humanoidBoneToModel[thumb_intermediate_key] = bone1
+                                humanoidBoneToModel[thumb_distal_key] = bone2
+                            else:
+                                print(f"  ✗ Could not find thumb1 bone to apply fix")
+                        elif num1 == 1 and num2 == 2:
+                            print(f"  ✓ Thumb bone mapping appears correct (1, 2, 3 pattern detected)")
 
 print("Thumb validation complete.")
 
