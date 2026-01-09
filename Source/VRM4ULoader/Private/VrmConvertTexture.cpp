@@ -727,6 +727,17 @@ bool VRMConverter::ConvertTextureAndMaterial(UVrmAssetListObject *vrmAssetList) 
 					pkg = VRM4U_CreatePackage(vrmAssetList->Package, *name);
 				}
 				UTexture2D* NewTexture2D = VRMLoaderUtil::CreateTextureFromImage(name, pkg, t.pcData, t.mWidth, bGenerateMips, NormalBoolTable[i], bNormalGreenFlip&&(VRMConverter::IsImportMode()==false));
+				
+				// Improved error handling for texture creation failures (issue #548)
+				if (NewTexture2D == nullptr) {
+					UE_LOG(LogVRM4ULoader, Warning, TEXT("VRM4U: Failed to create texture '%s' (index %d). Texture data may be corrupted or in an unsupported format."), *name, i);
+					UE_LOG(LogVRM4ULoader, Warning, TEXT("  This texture will be skipped. Materials referencing it may appear incorrect."));
+					// Continue with remaining textures rather than failing the entire import
+					textureCompressTypeArray.Add(EVRMImportTextureCompressType::VRMITC_DXT1);
+					vrmAssetList->Textures.Add(nullptr);
+					continue;
+				}
+				
 #if WITH_EDITOR
 				NewTexture2D->DeferCompression = false;
 #endif
@@ -765,7 +776,7 @@ bool VRMConverter::ConvertTextureAndMaterial(UVrmAssetListObject *vrmAssetList) 
 #endif
 
 				if (NormalBoolTable[i]) {
-					// UE5.5でクラッシュするので update後に再度更新
+					// In UE 5.5, normal-map compression must be applied after the initial update, so update the resource again.
 					NewTexture2D->CompressionSettings = TC_Normalmap;
 					NewTexture2D->UpdateResource();
 #if WITH_EDITOR

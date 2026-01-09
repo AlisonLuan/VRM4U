@@ -835,11 +835,37 @@ bool ULoaderBPFunctionLibrary::LoadVRMFileFromMemory(const UVrmAssetListObject *
 			RemoveAssetList(out);
 			return false;
 		}
-		{
-			// 後処理。UE5.7ではCreateMeshDescription を呼ぶため必要
-			if (out->SkeletalMesh) {
-				out->SkeletalMesh->PostLoad();
+		
+		// Validate SkeletalMesh before PostLoad (UE5.7 crash prevention - issue #548)
+		// For animation-only imports (VRMA, NoMesh), SkeletalMesh may have no geometry but should still exist
+		if (out->SkeletalMesh) {
+			// Only validate mesh data if this is a mesh-containing import
+			if (VRMConverter::Options::Get().IsDebugNoMesh() == false) {
+				// Verify the mesh has valid render data to prevent empty MeshDescription crashes
+				FSkeletalMeshRenderData* RenderData = out->SkeletalMesh->GetResourceForRendering();
+				if (!RenderData || RenderData->LODRenderData.Num() == 0) {
+					UE_LOG(LogVRM4ULoader, Error, TEXT("VRM4U: SkeletalMesh has no LOD render data. Import failed."));
+					RemoveAssetList(out);
+					return false;
+				}
+				
+				const FSkeletalMeshLODRenderData& LODData = RenderData->LODRenderData[0];
+				if (LODData.StaticVertexBuffers.PositionVertexBuffer.GetNumVertices() == 0) {
+					UE_LOG(LogVRM4ULoader, Error, TEXT("VRM4U: SkeletalMesh has no vertices. This will cause a crash when opening the asset in UE5.7+."));
+					UE_LOG(LogVRM4ULoader, Error, TEXT("Please check the source model file for corruption or missing mesh data."));
+					RemoveAssetList(out);
+					return false;
+				}
 			}
+			
+			// 後処理。UE5.7ではCreateMeshDescription を呼ぶため必要
+			// Post-processing: Required for UE5.7 to call CreateMeshDescription properly
+			out->SkeletalMesh->PostLoad();
+		} else {
+			// SkeletalMesh should always exist, even for animation-only imports
+			UE_LOG(LogVRM4ULoader, Error, TEXT("VRM4U: SkeletalMesh is null after conversion. Import failed."));
+			RemoveAssetList(out);
+			return false;
 		}
 	}
 	out->VrmMetaObject->SkeletalMesh = out->SkeletalMesh;

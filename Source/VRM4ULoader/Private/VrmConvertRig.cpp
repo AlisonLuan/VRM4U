@@ -136,9 +136,16 @@ bool VRMConverter::ConvertRig(UVrmAssetListObject *vrmAssetList) {
 	}
 	VRMGetNodeMappingData(vrmAssetList->SkeletalMesh).Add(mc);
 	URig *EngineHumanoidRig = LoadObject<URig>(nullptr, TEXT("/Engine/EngineMeshes/Humanoid.Humanoid"), nullptr, LOAD_None, nullptr);
-	mc->SetSourceAsset(EngineHumanoidRig);
-
-	VRMGetSkeleton(vrmAssetList->SkeletalMesh)->SetRigConfig(EngineHumanoidRig);
+	
+	// Note: EngineHumanoidRig may be null if the engine content is not available
+	// This is acceptable - the import will continue without humanoid retargeting setup
+	if (EngineHumanoidRig == nullptr) {
+		UE_LOG(LogVRM4ULoader, Warning, TEXT("VRM4U: Could not load /Engine/EngineMeshes/Humanoid. Humanoid retargeting will not be configured."));
+		UE_LOG(LogVRM4ULoader, Warning, TEXT("This is not fatal and does not affect the imported mesh. Retargeting can be set up manually if needed."));
+	} else {
+		mc->SetSourceAsset(EngineHumanoidRig);
+		VRMGetSkeleton(vrmAssetList->SkeletalMesh)->SetRigConfig(EngineHumanoidRig);
+	}
 
 	mc->SetTargetAsset(vrmAssetList->SkeletalMesh);
 	mc->AddDefaultMapping();

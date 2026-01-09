@@ -848,6 +848,26 @@ bool VRMConverter::ConvertModel(UVrmAssetListObject *vrmAssetList) {
 		}
 	}
 
+	// Validate mesh data to prevent empty MeshDescription crashes (UE5.7 issue #548)
+	// Skip validation if NoMesh option is enabled (e.g., for VRMA animation-only imports)
+	if (VRMConverter::Options::Get().IsDebugNoMesh() == false) {
+		// Check meshInfo first for more specific error message
+		if (result.meshInfo.Num() == 0) {
+			UE_LOG(LogVRM4ULoader, Error, TEXT("VRM4U: Import failed - no mesh data found in model file."));
+			return false;
+		}
+		
+		if (allVertex == 0 || allIndex == 0) {
+			UE_LOG(LogVRM4ULoader, Error, TEXT("VRM4U: Import failed - mesh has no vertices or triangles. Vertices=%d, Triangles=%d. This may be caused by:"), 
+				allVertex, allIndex / 3);
+			UE_LOG(LogVRM4ULoader, Error, TEXT("  - Invalid or corrupted model file"));
+			UE_LOG(LogVRM4ULoader, Error, TEXT("  - Unsupported model format version"));
+			UE_LOG(LogVRM4ULoader, Error, TEXT("  - Missing mesh data in the source file"));
+			UE_LOG(LogVRM4ULoader, Error, TEXT("Please verify the model file is valid and try re-exporting from the source application."));
+			return false;
+		}
+	}
+
 	static int boneOffset = 0;
 	{
 		// name dup check
