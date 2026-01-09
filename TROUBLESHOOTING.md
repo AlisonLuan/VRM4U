@@ -44,7 +44,7 @@ This document contains solutions to common issues encountered when using the VRM
 **Solution:**
 - **Use VRoid Studio 2.4.1 or newer** to export your VRM file
 - Older versions may export SpringBone data in formats that are incomplete or malformed
-- Re-export your character from the latest VRoid Studio and re-import into Unreal Engine
+- Re-export your character from the latest VRoid Studio and reimport into Unreal Engine
 
 **Why this happens:**
 VRoid Studio changed its SpringBone export format between versions. Older exports may:

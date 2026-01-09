@@ -988,9 +988,13 @@ bool VRMConverter::ConvertModel(UVrmAssetListObject *vrmAssetList) {
 			for (int32 BoneIdx = 0; BoneIdx < RefSkel.GetNum(); ++BoneIdx) {
 				const FTransform& BoneTransform = RefSkel.GetRefBonePose()[BoneIdx];
 				const FVector Scale = BoneTransform.GetScale3D();
-				if (!FMath::IsNearlyEqual(Scale.X, Scale.Y, 0.01f) || 
-					!FMath::IsNearlyEqual(Scale.Y, Scale.Z, 0.01f) ||
-					!FMath::IsNearlyEqual(Scale.X, Scale.Z, 0.01f)) {
+				// Check if scale is uniform (all components equal within tolerance)
+				const float ScaleAvg = (Scale.X + Scale.Y + Scale.Z) / 3.0f;
+				const float MaxDiff = FMath::Max3(
+					FMath::Abs(Scale.X - ScaleAvg),
+					FMath::Abs(Scale.Y - ScaleAvg),
+					FMath::Abs(Scale.Z - ScaleAvg));
+				if (MaxDiff > 0.01f) {
 					NonUniformScaleBones++;
 				}
 			}
