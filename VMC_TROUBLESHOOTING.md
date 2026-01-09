@@ -125,7 +125,7 @@ VRM4U includes a console variable for detailed VMC diagnostics.
 **How to Enable:**
 
 1. **In Editor:** Open the Output Log window (Window → Developer Tools → Output Log)
-2. **Open Console:** Press `` ` `` (backtick) or `~` (tilde) to open the console command line
+2. **Open Console:** Press the backtick key (\`) or tilde (~) to open the console command line
 3. **Enable Debug Mode:** Type:
    ```
    vrm4u.VMC.Debug 1

@@ -11,7 +11,7 @@
 DEFINE_LOG_CATEGORY(LogVRM4UCapture);
 
 // Console variable for VMC debugging
-static TAutoConsoleVariable<int32> CVarVMCDebug(
+TAutoConsoleVariable<int32> CVarVMCDebug(
 	TEXT("vrm4u.VMC.Debug"),
 	0,
 	TEXT("Enable VMC debugging output.\n")

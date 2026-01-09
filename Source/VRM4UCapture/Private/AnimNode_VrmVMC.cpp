@@ -13,11 +13,9 @@
 #include "VrmMetaObject.h"
 #include "VrmUtil.h"
 #include "VRM4UCaptureLog.h"
+#include "VRM4UCapture.h"
 
 #include <algorithm>
-
-// Access to VMC debug console variable
-extern TAutoConsoleVariable<int32> CVarVMCDebug;
 /////////////////////////////////////////////////////
 // FAnimNode_ModifyBone
 
@@ -143,7 +141,8 @@ void FAnimNode_VrmVMC::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCont
 
 	if (VMCData.BoneData.Num() == 0 && VMCData.CurveData.Num() == 0) {
 		const bool bDebugEnabled = CVarVMCDebug.GetValueOnAnyThread() > 0;
-		static bool bHasLoggedEmptyData = false;
+		// Note: Using thread-local static to avoid race conditions
+		thread_local static bool bHasLoggedEmptyData = false;
 		if (bDebugEnabled && !bHasLoggedEmptyData)
 		{
 			// Find the VMC object to get diagnostics
@@ -319,7 +318,8 @@ void FAnimNode_VrmVMC::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCont
 		auto* vmcObj = subsystem->FindOrAddServer(ServerAddress, Port);
 		if (vmcObj && vmcObj->HasReceivedRootTranslation() && bUseRemoteCenterPos)
 		{
-			static int32 LogCounter = 0;
+			// Note: Using thread-local static to avoid race conditions
+			thread_local static int32 LogCounter = 0;
 			if (++LogCounter % 300 == 1) // Log every ~5 seconds at 60fps
 			{
 				UE_LOG(LogVRM4UCapture, Display, TEXT("VMC AnimNode: Root translation data is being received and processed. If character is not moving, check Skeleton's Root Bone Translation Retargeting mode (should be 'Skeleton' not 'Animation')."));

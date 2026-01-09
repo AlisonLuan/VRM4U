@@ -3,6 +3,7 @@
 
 #include "VrmVMCObject.h"
 #include "VRM4U_VMCSubsystem.h"
+#include "VRM4UCapture.h"
 
 #include "Engine/Engine.h"
 #include "UObject/StrongObjectPtr.h"
@@ -10,9 +11,6 @@
 #include "OSCManager.h"
 #include "OSCServer.h"
 #include "VRM4UCaptureLog.h"
-
-// Access to VMC debug console variable
-extern TAutoConsoleVariable<int32> CVarVMCDebug;
 
 void UVrmVMCObject::DestroyServer() {
 	ServerName = "";

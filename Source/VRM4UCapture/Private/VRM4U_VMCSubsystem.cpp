@@ -4,15 +4,13 @@
 #include "VRM4U_VMCSubsystem.h"
 #include "VRM4UCaptureLog.h"
 #include "VrmVMCObject.h"
+#include "VRM4UCapture.h"
 
 #include "Engine/Engine.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Misc/ScopeLock.h"
 #include "OSCManager.h"
 #include "OSCServer.h"
-
-// Access to VMC debug console variable
-extern TAutoConsoleVariable<int32> CVarVMCDebug;
 
 bool UVRM4U_VMCSubsystem::CopyVMCData(FVMCData &data, FString ServerAddress, int port) {
 	for (int i = 0; i < VMCObjectList.Num(); ++i) {
