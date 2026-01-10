@@ -1,3 +1,9 @@
+@echo off
+REM ============================================================================
+REM Make script location-independent: always run relative to script directory
+REM ============================================================================
+cd /d %~dp0
+
 set V_DATE=%date:~0,4%%date:~5,2%%date:~8,2%
 
 
