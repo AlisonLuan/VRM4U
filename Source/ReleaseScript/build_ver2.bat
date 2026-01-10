@@ -205,7 +205,7 @@ del "..\..\..\VRM4U\Source\VRM4URender\VRM4URender.Build.cs"
 ::::::::::::::::::::::::::: generate
 
 
-call %BUILD% BuildPlugin -plugin=%UPLUGIN% -package=%OUTPATH% -TargetPlatforms=%PLATFORM% -clientconfig=%BUILDTYPE% %UPROJECT%
+call %BUILD% BuildPlugin -plugin=%UPLUGIN% -package=%OUTPATH% -TargetPlatforms=%PLATFORM% -clientconfig=%BUILDTYPE%
 
 if not %errorlevel% == 0 (
     echo [ERROR] ========================================
