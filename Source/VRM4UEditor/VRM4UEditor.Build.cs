@@ -31,15 +31,12 @@ public class VRM4UEditor : ModuleRules
 
 		// Add IKRig dependencies for UE5+ (needed for VrmEditorBPFunctionLibrary)
 		BuildVersion Version;
-		if (BuildVersion.TryRead(BuildVersion.GetDefaultFileName(), out Version))
+		if (BuildVersion.TryRead(BuildVersion.GetDefaultFileName(), out Version) && Version.MajorVersion == 5)
 		{
-			if (Version.MajorVersion == 5)
+			PrivateDependencyModuleNames.Add("IKRig");
+			if (Target.bBuildEditor)
 			{
-				PrivateDependencyModuleNames.Add("IKRig");
-				if (Target.bBuildEditor)
-				{
-					PrivateDependencyModuleNames.Add("IKRigEditor");
-				}
+				PrivateDependencyModuleNames.Add("IKRigEditor");
 			}
 		}
 
