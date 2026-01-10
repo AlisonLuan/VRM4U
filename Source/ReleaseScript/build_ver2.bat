@@ -4,7 +4,14 @@ set PLATFORM=%2
 set BUILDTYPE=%3
 set ZIPNAME=../../../../_zip/%4
 
-set UE5BASE=D:\Program Files\Epic Games
+REM Resolve Unreal Engine installation path
+REM This replaces the hard-coded path with auto-detection + override support
+call "%~dp0resolve_ue_path.bat" %UE5VER% UE5BASE
+if not %errorlevel% == 0 (
+    echo [ERROR] Failed to resolve Unreal Engine path
+    goto err
+)
+
 set UPLUGIN="%~dp0../../VRM4U.uplugin"
 set OUTPATH=d:/tmp/_out
 

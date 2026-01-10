@@ -97,6 +97,11 @@ https://ruyo.github.io/VRM4U/10_detail/
     - こちらより昔のソースを取得ください https://github.com/ruyo/UnrealEngine_VRM4UPlugin
     -  （404エラーページが出る場合は[こちらより紐付けをしてください](https://www.unrealengine.com/ja/blog/updated-authentication-process-for-connecting-epic-github-accounts)）
 
+### プラグインのビルド方法
+
+プラグインパッケージをビルドする方法については [BUILDING.md](./BUILDING.md) を参照してください。
+ビルドスクリプトはUnreal Engineのインストールパスを自動検出します。
+
 ## 開発支援
 
 VRM4Uの開発を支援したい という奇特な方は[こちら](https://ruyo.booth.pm/items/1707224)からどうぞ

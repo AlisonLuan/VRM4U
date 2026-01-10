@@ -65,4 +65,9 @@ https://github.com/ruyo/UnrealEngine_VRM4UPlugin ([Connecting Epic, GitHub Accou
 
 https://github.com/ruyo/assimp
 
+### Building the Plugin
+
+For instructions on building plugin packages, see [BUILDING.md](./BUILDING.md).
+The build scripts automatically detect your Unreal Engine installation.
+
 Thanks.

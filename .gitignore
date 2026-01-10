@@ -31,3 +31,6 @@
 *.out
 *.app
 _codeql_*
+
+# Build script configuration (local overrides)
+Source/ReleaseScript/ue_path.config
