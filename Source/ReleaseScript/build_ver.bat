@@ -19,7 +19,24 @@ set UPROJECT="C:\Users\ruyo\Documents\Unreal Projects\MyProjectBuildScript\MyPro
 set UNREALVERSIONSELECTOR="C:\Program Files (x86)\Epic Games\Launcher\Engine\Binaries\Win64\UnrealVersionSelector.exe"
 
 
-git reset --hard HEAD
+REM ============================================================================
+REM Optional git cleanup: Reset working tree to HEAD
+REM ============================================================================
+REM This step reverts any local modifications made during previous builds.
+REM It is disabled by default to avoid surprising users building locally.
+REM To enable, set environment variable: RELEASESCRIPT_GIT_RESET=1
+REM ============================================================================
+
+if "%RELEASESCRIPT_GIT_RESET%"=="1" (
+    echo [build_ver] RELEASESCRIPT_GIT_RESET=1 detected - performing git reset --hard HEAD
+    echo [build_ver] WARNING: This will discard all uncommitted changes in your working directory!
+    git reset --hard HEAD
+    if not %errorlevel% == 0 (
+        echo [WARNING] git reset failed - continuing anyway
+    )
+) else (
+    echo [build_ver] Skipping git reset (to enable, set RELEASESCRIPT_GIT_RESET=1)
+)
 
 powershell -ExecutionPolicy RemoteSigned .\version.ps1 \"%UE4VER%\"
 

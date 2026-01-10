@@ -5,16 +5,30 @@ if (-not (Test-Path $projectPath)) {
     exit 0
 }
 
-$a = Get-Content $projectPath -Encoding UTF8 | ConvertFrom-Json
-$a
-
-# Ensure EngineAssociation property exists before trying to set it
-if (-not (Get-Member -InputObject $a -Name "EngineAssociation" -MemberType Properties)) {
-    Write-Host "[version.ps1] Warning: EngineAssociation property not found in project file - adding it"
-    $a | Add-Member -MemberType NoteProperty -Name "EngineAssociation" -Value ""
+# Read and parse the project file with error handling
+try {
+    $a = Get-Content $projectPath -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    
+    # Verify we got a valid object
+    if ($null -eq $a) {
+        Write-Host "[version.ps1] Warning: Failed to parse project file as JSON - skipping"
+        exit 0
+    }
+    
+    $a
+    
+    # Ensure EngineAssociation property exists before trying to set it
+    if (-not (Get-Member -InputObject $a -Name "EngineAssociation" -MemberType Properties)) {
+        Write-Host "[version.ps1] Warning: EngineAssociation property not found in project file - adding it"
+        $a | Add-Member -MemberType NoteProperty -Name "EngineAssociation" -Value ""
+    }
+    
+    $a.EngineAssociation = $Args[0]
+} catch {
+    Write-Host "[version.ps1] Warning: Error reading/parsing project file: $_"
+    Write-Host "[version.ps1] Skipping EngineAssociation update (this is OK for plugin-only builds)"
+    exit 0
 }
-
-$a.EngineAssociation = $Args[0]
 
 if ($a.EngineAssociation -eq '4.23' -or $a.EngineAssociation -eq '4.22' -or $a.EngineAssociation -eq '4.21' -or $a.EngineAssociation -eq '4.20')
 {

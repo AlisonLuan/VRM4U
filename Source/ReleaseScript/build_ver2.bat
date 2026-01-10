@@ -93,7 +93,24 @@ set "OUTPATH_FOR_UAT=!RESOLVED_OUTPATH:\=/!"
 REM Export for use in the rest of the script
 endlocal & set "OUTPATH=%OUTPATH_FOR_UAT%"
 
-git reset --hard HEAD
+REM ============================================================================
+REM Optional git cleanup: Reset working tree to HEAD
+REM ============================================================================
+REM This step reverts any local modifications made during previous builds.
+REM It is disabled by default to avoid surprising users building locally.
+REM To enable, set environment variable: RELEASESCRIPT_GIT_RESET=1
+REM ============================================================================
+
+if "%RELEASESCRIPT_GIT_RESET%"=="1" (
+    echo [build_ver2] RELEASESCRIPT_GIT_RESET=1 detected - performing git reset --hard HEAD
+    echo [build_ver2] WARNING: This will discard all uncommitted changes in your working directory!
+    git reset --hard HEAD
+    if not %errorlevel% == 0 (
+        echo [WARNING] git reset failed - continuing anyway
+    )
+) else (
+    echo [build_ver2] Skipping git reset (to enable, set RELEASESCRIPT_GIT_RESET=1)
+)
 
 powershell -ExecutionPolicy RemoteSigned .\version.ps1 \"%UE5VER%\"
 
