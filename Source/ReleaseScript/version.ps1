@@ -1,4 +1,11 @@
-$a = Get-Content ../../../../MyProjectBuildScript.uproject -Encoding UTF8 | ConvertFrom-Json
+# Check if the project file exists (only needed for build_ver.bat, not build_ver2.bat)
+$projectPath = "../../../../MyProjectBuildScript.uproject"
+if (-not (Test-Path $projectPath)) {
+    Write-Host "[version.ps1] MyProjectBuildScript.uproject not found - skipping (this is OK for plugin-only builds)"
+    exit 0
+}
+
+$a = Get-Content $projectPath -Encoding UTF8 | ConvertFrom-Json
 $a
 
 $a.EngineAssociation = $Args[0]
@@ -45,5 +52,5 @@ if ($a.EngineAssociation -eq '5.1' -or $a.EngineAssociation -eq '5.0' -or $a.Eng
 }
 
 
-$a | ConvertTo-Json > ../../../../MyProjectBuildScript.uproject
+$a | ConvertTo-Json > $projectPath
 
