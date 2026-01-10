@@ -121,7 +121,7 @@ REM Convert commas to spaces for FOR loop (preserve dots in version numbers like
 set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:,= %"
 
 REM Debug output to verify version list processing
-echo [build_5] DEBUG: VERSION_LIST='%VERSION_LIST%'
+REM NOTE: Only echo SAFE_VERSION_LIST to prevent command injection via metacharacters
 echo [build_5] DEBUG: SAFE_VERSION_LIST='%SAFE_VERSION_LIST%'
 
 REM Guard: Track if loop executes at least once
@@ -204,7 +204,6 @@ if !LOOP_EXECUTED! == 0 (
     echo [build_5] ========================================
     echo [build_5] [ERROR] Version list loop did not execute!
     echo [build_5] ========================================
-    echo [build_5] VERSION_LIST: %VERSION_LIST%
     echo [build_5] SAFE_VERSION_LIST: %SAFE_VERSION_LIST%
     echo [build_5] This indicates a scripting bug in version list processing.
     echo [build_5] ========================================
