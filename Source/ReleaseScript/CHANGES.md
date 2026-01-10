@@ -1,6 +1,251 @@
-# Version Script Fix - Change Summary
+# Release Script Changes - Changelog
 
-## Issue
+## 2026-01-10: Resilient Version Handling
+
+### Issue
+The multi-version build scripts (`build_5.bat`, `build_all.bat`) would fail completely if any configured UE version was not installed, preventing builds of installed versions. This created barriers for contributors who don't have all engine versions installed.
+
+### Changes Made
+
+#### 1. Configurable Version List
+
+**Before**: Hard-coded version list in build_5.bat (lines 6-73)
+```batch
+::5_7
+call %BUILD_SCRIPT% 5.7 Win64 Shipping VRM4U_5_7_%V_DATE%.zip
+...
+::5_6
+call %BUILD_SCRIPT% 5.6 Win64 Shipping VRM4U_5_6_%V_DATE%.zip
+...
+```
+
+**After**: Three configuration methods with precedence:
+
+1. **BUILD_UE_VERSIONS** environment variable (highest priority)
+```batch
+set BUILD_UE_VERSIONS=5.7,5.6
+build_5.bat
+```
+
+2. **versions.txt** file
+```
+# My installed versions
+5.7
+5.6
+```
+
+3. **Default list** (lowest priority): 5.7,5.6,5.5,5.4,5.3,5.2
+
+#### 2. Skip-on-Missing Behavior (Default)
+
+**Before**: Script failed immediately when a version was not found
+```batch
+if not %errorlevel% == 0 (
+    echo [ERROR] :P
+    goto err
+)
+```
+
+**After**: Script skips missing versions by default with detailed warnings
+```batch
+if !RESOLVE_EXIT_CODE! == 0 (
+    REM Version found - build it
+) else (
+    echo [build_5] WARNING: UE !CURRENT_VERSION! not installed
+    REM Show detailed error and how to fix
+    if "%STRICT_VERSIONS%"=="1" (
+        goto err  REM Fail in strict mode
+    ) else (
+        REM Skip and continue
+    )
+)
+```
+
+**Output example**:
+```
+[build_5] Processing UE 5.6
+[build_5] WARNING: UE 5.6 not installed
+[build_5] How to fix:
+[build_5]   Option 1: Install UE 5.6 via Epic Games Launcher
+[build_5]   Option 2: Remove 5.6 from your version list
+[build_5]   Option 3: Set UE_ROOT environment variable
+[build_5] Skipping UE 5.6 and continuing...
+```
+
+#### 3. Strict Mode for CI
+
+**Usage**:
+```batch
+set STRICT_VERSIONS=1
+build_5.bat
+```
+
+**Behavior**: Fails immediately if any configured version is missing
+- Prints detailed error with expected path
+- Shows how to fix the issue
+- Exit code 1 (failure)
+
+#### 4. Build Summary Reporting
+
+**After each build run**:
+```
+[build_5] Build Summary
+[build_5] Versions built: 2
+[build_5]   > 5.7, 5.6
+[build_5] Versions skipped: 4
+[build_5]   > 5.5, 5.4, 5.3, 5.2
+[build_5] SUCCESS - Build completed
+```
+
+#### 5. Refactored Build Logic
+
+- Separated version iteration from platform builds
+- Created `:build_version` subroutine for version-specific platform configs
+- Created `:build_platform` subroutine for individual builds
+- Improved error messages and logging
+- Added build tracking (BUILD_COUNT, SKIP_COUNT, etc.)
+
+### Files Modified
+
+```
+.gitignore                                       (added versions.txt)
+Source/ReleaseScript/build_5.bat                 (major refactor)
+BUILDING.md                                      (added section 3)
+Source/ReleaseScript/QUICK_REFERENCE.md          (added version config section)
+```
+
+### Files Created
+
+```
+Source/ReleaseScript/versions.txt.example        (2.1 KB)
+Source/ReleaseScript/BUILD_VERSION_CONFIG.md     (8.4 KB)
+Source/ReleaseScript/TEST_PLAN_VERSIONS.md       (8.5 KB)
+```
+
+### Backward Compatibility
+
+✅ **Fully backward compatible**
+
+- If no configuration provided, uses same default list as before
+- Default behavior is more permissive (skip vs fail) - safer
+- All existing environment variables still work
+- No changes to build_ver2.bat or other scripts
+- No breaking changes to command-line usage
+
+### Testing Performed
+
+#### Logic Verification (Bash Simulation)
+```
+✓ Default skip mode with mixed installed/missing versions
+✓ Strict mode fails on first missing version
+✓ versions.txt parsing (comments, blank lines, trimming)
+✓ Configuration precedence (env var > file > default)
+✓ Build counting and summary reporting
+```
+
+#### Manual Testing Required
+⚠️ Windows batch scripts cannot be executed on Linux CI
+📋 Comprehensive test plan provided: TEST_PLAN_VERSIONS.md (13 scenarios)
+
+### Usage Examples
+
+#### Example 1: Local Dev (Only UE 5.7)
+```batch
+cd Source\ReleaseScript
+build_5.bat
+```
+**Result**: ✅ Builds 5.7, skips 5.6-5.2, succeeds
+
+#### Example 2: CI (Strict Mode)
+```batch
+set BUILD_UE_VERSIONS=5.7,5.6
+set STRICT_VERSIONS=1
+set UE_ROOT=D:\UE
+build_5.bat
+```
+**Result**: ❌ Fails if either 5.7 or 5.6 missing
+
+#### Example 3: Custom Config
+```batch
+copy versions.txt.example versions.txt
+notepad versions.txt  # Edit to: 5.7, 5.6 only
+build_5.bat
+```
+**Result**: ✅ Builds only 5.7 and 5.6
+
+### Benefits
+
+**For Contributors**:
+- ✅ Build with only one UE version installed
+- ✅ Clear warnings show what's missing and how to fix
+- ✅ No need to install all engine versions
+
+**For CI/CD**:
+- ✅ Strict mode ensures complete builds
+- ✅ Environment variable configuration
+- ✅ Clear exit codes (0=success, 1=failure)
+
+**For Maintainers**:
+- ✅ Reduces "build fails for me" support requests
+- ✅ Easier contributor onboarding
+- ✅ Centralized version configuration
+
+### Documentation Added
+
+1. **BUILD_VERSION_CONFIG.md** (8.4 KB)
+   - Detailed configuration guide
+   - All configuration methods
+   - Skip vs strict mode explained
+   - Examples for common scenarios
+   - Troubleshooting section
+   - Best practices for local dev and CI
+
+2. **TEST_PLAN_VERSIONS.md** (8.5 KB)
+   - 13 manual test scenarios
+   - Covers all features and edge cases
+   - Validation checklist
+   - Troubleshooting during testing
+   - Success criteria
+
+3. **versions.txt.example** (2.1 KB)
+   - Template configuration
+   - Commented version list
+   - Usage instructions
+   - Platform configuration notes
+
+4. **BUILDING.md** - Added Section 3
+   - "Configure Which Versions to Build (Optional)"
+   - Documents all configuration methods
+   - Examples and best practices
+
+5. **QUICK_REFERENCE.md** - Updated
+   - Renamed to "VRM4U Build Scripts"
+   - Added version configuration section
+   - Added skip vs strict mode section
+
+### Security Considerations
+
+✅ **No new security concerns**
+
+- No network operations
+- No credential handling
+- Only reads local config files
+- Validates UE paths before use
+- Same file permissions as before
+
+### Future Enhancements (Not Implemented)
+
+Potential improvements for future work:
+- PowerShell version for cross-platform support
+- Per-version platform configuration in versions.txt
+- CI status integration (GitHub Actions, etc.)
+- Automated testing on Windows CI
+
+---
+
+## 2024-XX-XX: Version Script Fix
+
+### Issue
 The release scripts had two main problems:
 1. **version.ps1 reliability**: Failed to parse JSON files, looked for non-existent project files, and had poor error handling
 2. **Git behavior**: Concerns about scripts unexpectedly changing repository state
