@@ -34,3 +34,4 @@ _codeql_*
 
 # Build script configuration (local overrides)
 Source/ReleaseScript/ue_path.config
+Source/ReleaseScript/versions.txt

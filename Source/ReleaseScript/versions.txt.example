@@ -1,0 +1,67 @@
+# ============================================================================
+# versions.txt.example
+#
+# Example configuration file for specifying which UE versions to build
+#
+# Copy this file to 'versions.txt' (same directory) and customize as needed.
+# This file is gitignored and will not be committed to the repository.
+#
+# Usage:
+#   1. Copy: versions.txt.example -> versions.txt
+#   2. Edit versions.txt to enable/disable specific versions
+#   3. Run build scripts normally (build_all.bat, build_5.bat)
+#
+# Alternative: Use BUILD_UE_VERSIONS environment variable
+#   set BUILD_UE_VERSIONS=5.7,5.6,5.5
+#   call build_all.bat
+#
+# ============================================================================
+
+# Format: One version per line
+# Lines starting with # are comments and will be ignored
+# Blank lines are also ignored
+# Version format: X.Y (e.g., 5.7, 5.6, 4.27)
+
+# UE 5.7 - Latest
+5.7
+
+# UE 5.6
+5.6
+
+# UE 5.5
+5.5
+
+# UE 5.4
+5.4
+
+# UE 5.3
+5.3
+
+# UE 5.2
+5.2
+
+# ============================================================================
+# Platform Configuration
+# ============================================================================
+# By default, each version builds for specific platforms:
+#   5.7: Win64 (Shipping), Android (Development), Linux (Shipping)
+#   5.6: Win64 (Shipping), Android (Development)
+#   5.5: Win64 (Shipping), Win64 (Debug)
+#   5.4-5.2: Win64 (Shipping)
+#
+# Platform configuration is hard-coded in build_5.bat
+# To change platforms, edit build_5.bat directly
+# ============================================================================
+
+# ============================================================================
+# Skip Missing Versions (Default Behavior)
+# ============================================================================
+# By default, if a version is not installed, the build script will:
+#   1. Print a warning with the expected path
+#   2. Skip that version
+#   3. Continue building other versions
+#
+# To enable strict mode (fail if any version is missing):
+#   set STRICT_VERSIONS=1
+#   call build_all.bat
+# ============================================================================
