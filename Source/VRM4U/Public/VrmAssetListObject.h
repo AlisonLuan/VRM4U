@@ -256,8 +256,14 @@ public:
 #if WITH_EDITOR
 
 
+#if UE_VERSION_OLDER_THAN(5,7,0)
+	// UE < 5.7: Legacy TArray<FAssetRegistryTag> signature
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
-	// Import data for this 
+#else
+	// UE 5.7+: New FAssetRegistryTagsContext signature
+	virtual void GetAssetRegistryTags(FAssetRegistryTagsContext Context) const override;
+#endif
+	// Import data for this
 	void WaitUntilAsyncPropertyReleased() const;
 
 
