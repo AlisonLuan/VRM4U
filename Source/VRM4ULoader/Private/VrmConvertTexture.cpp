@@ -5,6 +5,7 @@
 #include "VrmConvertTexture.h"
 #include "VrmConvert.h"
 #include "VrmUtil.h"
+#include "VRM4ULoaderLog.h"
 
 #include "Materials/MaterialExpressionTextureSampleParameter2D.h"
 

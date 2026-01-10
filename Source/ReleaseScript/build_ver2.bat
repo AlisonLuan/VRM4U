@@ -123,8 +123,9 @@ if not defined UEVersion100 (
 REM Also keep an integer major version (e.g., 5 from 5.7) for any simple comparisons
 set /a UEVersion=UEMajorVersion 2>nul
 
-
-del "..\..\..\VRM4U\Content\Util\Actor\latest\WBP_MorphTarget.uasset"
+REM Delete optional editor widget assets (suppress errors if files don't exist)
+del "..\..\..\VRM4U\Content\Util\Actor\latest\WBP_MorphTarget.uasset" 2>nul
+del "..\..\..\VRM4U\Content\Util\Actor\latest\WBP_MorphTargetUE5.uasset" 2>nul
 
 set isRetargeterEnable=TRUE
 

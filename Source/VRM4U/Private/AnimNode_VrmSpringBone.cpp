@@ -36,6 +36,7 @@ SOFTWARE.
 #include "SceneInterface.h"
 #include "DrawDebugHelpers.h"
 
+#include "VRM4U.h"
 #include "VrmMetaObject.h"
 #include "VrmAssetListObject.h"
 #include "VrmUtil.h"
