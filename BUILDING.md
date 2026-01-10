@@ -27,7 +27,37 @@ VRM4U uses automated build scripts located in `Source/ReleaseScript/` to create 
 
 ## Quick Start
 
-### 1. Configure Unreal Engine Path
+### 1. Configure Output Directory (Optional)
+
+The build scripts will automatically use a safe default output directory (`%TEMP%\VRM4U_BuildOut`), but you can override this if needed:
+
+#### Option A: Environment Variable (Recommended)
+
+Set `VRM4U_OUTPATH` before running build scripts:
+
+```batch
+REM Use a custom output directory
+set VRM4U_OUTPATH=C:\MyBuildOutput
+
+REM Or use a directory relative to the repository
+set VRM4U_OUTPATH=%CD%\_out
+
+REM Then run build
+cd Source\ReleaseScript
+build_5.bat
+```
+
+#### Option B: Use Default (No Configuration Needed)
+
+If you don't set `VRM4U_OUTPATH`, the scripts will automatically use:
+- `%TEMP%\VRM4U_BuildOut` (typically `C:\Users\<YourName>\AppData\Local\Temp\VRM4U_BuildOut`)
+
+This default location:
+- Exists on all Windows machines
+- Is always writable
+- Requires no manual configuration
+
+### 2. Configure Unreal Engine Path
 
 The build scripts need to locate your Unreal Engine installation(s). There are three ways to configure this:
 
@@ -85,7 +115,7 @@ C:\Program Files\Epic Games
 
 **Note**: Do NOT include the version folder (like `UE_5.7`) in the path. The scripts will append the appropriate version automatically.
 
-### 2. Run Build Scripts
+### 3. Run Build Scripts
 
 #### Build All UE5 Versions
 
@@ -163,8 +193,19 @@ build_ver2.bat <UE_VERSION> <PLATFORM> <CONFIG> <ZIP_NAME>
 - `<CONFIG>`: Build configuration (`Shipping`, `Development`, `Debug`)
 - `<ZIP_NAME>`: Output zip file name (e.g., `VRM4U_5_7_20250110.zip`)
 
+**Output Directory Configuration:**
+
+The script uses the following precedence for determining output directory:
+1. `VRM4U_OUTPATH` environment variable (highest priority)
+2. `OUTPATH` environment variable (legacy support)
+3. `%TEMP%\VRM4U_BuildOut` (safe default - always works)
+
 **Example:**
 ```batch
+build_ver2.bat 5.7 Win64 Shipping VRM4U_5_7_test.zip
+
+REM With custom output directory
+set VRM4U_OUTPATH=C:\BuildOutput
 build_ver2.bat 5.7 Win64 Shipping VRM4U_5_7_test.zip
 ```
 
@@ -209,7 +250,19 @@ build_all.bat
 
 ## Output
 
-Built plugin packages are created in `../../../../_zip/` relative to the ReleaseScript directory.
+### Build Artifacts Location
+
+Built plugin packages (zip files) are created in `../../../../_zip/` relative to the ReleaseScript directory (typically at repository root).
+
+### Intermediate Build Output
+
+During the build process, UAT creates intermediate files in the configured output directory:
+- **Default:** `%TEMP%\VRM4U_BuildOut` 
+- **Custom:** Set via `VRM4U_OUTPATH` environment variable
+
+This intermediate output is used by the packaging process and can be safely deleted after builds complete.
+
+### Package Contents
 
 Each package contains:
 - Plugin binaries for the target platform
@@ -218,6 +271,30 @@ Each package contains:
 - Source code (if applicable)
 
 ## Troubleshooting
+
+### "Could not find a part of the path" Error
+
+**Problem:** Build fails with `DirectoryNotFoundException` for the output path.
+
+**Solution:** 
+- **Recommended:** Don't set `VRM4U_OUTPATH` - the default `%TEMP%\VRM4U_BuildOut` always works
+- **Custom path:** If you need a specific location, ensure:
+  1. The path exists or can be created
+  2. You have write permissions
+  3. The path uses backslashes on Windows (e.g., `C:\Output` not `C:/Output`)
+
+**Example of setting a custom output path:**
+```batch
+REM Using a directory on C: drive
+set VRM4U_OUTPATH=C:\VRM4U_Builds
+
+REM Using a directory relative to repository root
+cd Source\ReleaseScript
+set VRM4U_OUTPATH=%CD%\..\..\BuildOutput
+
+REM Run the build
+build_5.bat
+```
 
 ### "Unreal Engine not found" Error
 
@@ -276,13 +353,17 @@ build_5.bat
 For continuous integration pipelines:
 
 1. **Install UE**: Ensure UE is installed in a known location
-2. **Set Environment Variable**: Use `UE_ROOT` for deterministic builds
+2. **Set Environment Variables**: 
+   - `UE_ROOT` for Unreal Engine path
+   - `VRM4U_OUTPATH` for build output (optional - uses safe default if not set)
 3. **Run Build**: Execute build scripts non-interactively
 
 **GitHub Actions Example:**
 ```yaml
-- name: Setup Unreal Engine Path
-  run: echo "UE_ROOT=C:\Program Files\Epic Games" >> $ENV:GITHUB_ENV
+- name: Setup Environment
+  run: |
+    echo "UE_ROOT=C:\Program Files\Epic Games" >> $ENV:GITHUB_ENV
+    echo "VRM4U_OUTPATH=${{ github.workspace }}\_buildout" >> $ENV:GITHUB_ENV
 
 - name: Build Plugin
   run: |
@@ -295,18 +376,55 @@ For continuous integration pipelines:
 build:
   script:
     - $env:UE_ROOT = "C:\UnrealEngine"
+    - $env:VRM4U_OUTPATH = "$CI_PROJECT_DIR\_buildout"
     - cd Source\ReleaseScript
     - .\build_5.bat
 ```
+
+**Notes for CI:**
+- If `VRM4U_OUTPATH` is not set, builds use `%TEMP%\VRM4U_BuildOut` (safe default)
+- Set `VRM4U_OUTPATH` to a workspace-relative path for better artifact collection
+- Ensure the output directory has sufficient disk space for plugin builds
 
 ## Advanced Configuration
 
 ### Custom Output Directory
 
-Edit the build scripts to change `OUTPATH`:
+The default output directory is `%TEMP%\VRM4U_BuildOut`, which is safe and writable on all systems. You can customize it in two ways:
+
+#### Per-Session Override (Temporary)
+
+Set the environment variable before running builds:
 
 ```batch
-REM In build_ver2.bat
+set VRM4U_OUTPATH=D:\CustomOutput
+build_ver2.bat 5.7 Win64 Shipping VRM4U_5_7_test.zip
+```
+
+#### Persistent Override
+
+Set a system or user environment variable:
+
+1. Open System Properties → Environment Variables
+2. Add new variable:
+   - **Name:** `VRM4U_OUTPATH`
+   - **Value:** `C:\MyBuildOutput` (or your preferred path)
+3. Restart Command Prompt and run builds
+
+**Note:** The legacy `OUTPATH` environment variable is also supported for backward compatibility, but `VRM4U_OUTPATH` takes precedence if both are set.
+
+### Custom Output Directory (Legacy Method - Not Recommended)
+
+**Note:** The legacy `OUTPATH` environment variable is also supported for backward compatibility, but `VRM4U_OUTPATH` takes precedence if both are set.
+
+### Custom Output Directory (Legacy Method - Not Recommended)
+
+**Deprecated:** Editing the script directly is no longer necessary. Use `VRM4U_OUTPATH` environment variable instead.
+
+~~Edit the build scripts to change `OUTPATH`:~~
+
+```batch
+REM In build_ver2.bat (DEPRECATED - use VRM4U_OUTPATH instead)
 set OUTPATH=d:/tmp/_out  REM Change this to your preferred location
 ```
 
