@@ -1,0 +1,34 @@
+# ============================================================================
+# ue_path.config.example
+#
+# Example configuration file for Unreal Engine path override
+#
+# Copy this file to 'ue_path.config' (same directory) and edit the path below.
+# This file is gitignored and will not be committed to the repository.
+#
+# Usage:
+#   1. Copy: ue_path.config.example -> ue_path.config
+#   2. Edit ue_path.config with your UE base installation path
+#   3. Run build scripts normally
+#
+# ============================================================================
+
+# Specify the BASE directory where your Unreal Engine versions are installed.
+# The build scripts will append the version (e.g., UE_5.7) to this path.
+#
+# Examples:
+#   C:\Program Files\Epic Games
+#   D:\Epic Games
+#   E:\UnrealEngine
+#
+# All of these should have subdirectories like:
+#   <your_path>\UE_5.7\Engine\...
+#   <your_path>\UE_5.6\Engine\...
+#   <your_path>\UE_4.27\Engine\...
+#
+# Note: Do NOT include the version folder (UE_5.7, etc.) in this path.
+#       Do NOT add quotes around the path.
+#       Blank lines and lines starting with # are ignored.
+#       Uncomment and modify the example below:
+
+# C:\Program Files\Epic Games

@@ -6,7 +6,15 @@ set ZIPNAME=../../../../_zip/%5
 ::set PROJECTNAMEEDITOR="MyProjectBuildScriptEtidor"
 set PROJECTNAMEEDITOR=%4
 
-set UE4BASE=D:\Program Files\Epic Games
+REM Resolve Unreal Engine installation path
+REM This replaces the hard-coded path with auto-detection + override support
+call "%~dp0resolve_ue_path.bat" %UE4VER% UE4BASE
+if not %errorlevel% == 0 (
+    echo [ERROR] Failed to resolve Unreal Engine %UE4VER% path
+    echo [ERROR] See error messages above for details
+    goto err
+)
+
 set UPROJECT="C:\Users\ruyo\Documents\Unreal Projects\MyProjectBuildScript\MyProjectBuildScript.uproject"
 set UNREALVERSIONSELECTOR="C:\Program Files (x86)\Epic Games\Launcher\Engine\Binaries\Win64\UnrealVersionSelector.exe"
 
