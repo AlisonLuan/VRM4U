@@ -15,13 +15,9 @@
 #include "MovieSceneSequence.h"
 #include "Sections/MovieSceneFloatSection.h"
 
-// IK Rig includes for UE5+
+// IK Rig includes for UE5+ (use centralized version-aware header)
 #if !UE_VERSION_OLDER_THAN(5,0,0)
-#include "Rig/IKRigDefinition.h"
-#include "Rig/IKRigProcessor.h"
-#if WITH_EDITOR
-#include "RigEditor/IKRigController.h"
-#endif
+#include "VrmRigHeader.h"
 #endif
 
 //#include "VRM4U.h"
