@@ -92,7 +92,21 @@ REM ============================================================================
 REM Process each version
 REM ============================================================================
 
-for %%V in (%VERSION_LIST%) do (
+REM Sanitize VERSION_LIST to prevent command injection
+REM Remove potentially dangerous metacharacters before iteration
+set "SAFE_VERSION_LIST=%VERSION_LIST%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:&=%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:|=%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:>=%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:<=%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:(=%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:)=%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:^=%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:%%=%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:;=%"
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:`=%"
+
+for %%V in (%SAFE_VERSION_LIST%) do (
     set CURRENT_VERSION=%%V
     echo.
     echo [build_5] ========================================
@@ -240,7 +254,7 @@ set ZIPNAME=VRM4U_%BLD_VERSION_FILE%_%V_DATE%%BLD_SUFFIX%.zip
 echo [build_5] Building: UE %BLD_VERSION% / %BLD_PLATFORM% / %BLD_CONFIG% -^> %ZIPNAME%
 
 call %BUILD_SCRIPT% %BLD_VERSION% %BLD_PLATFORM% %BLD_CONFIG% %ZIPNAME%
-if not %errorlevel% == 0 (
+if not !errorlevel! == 0 (
     echo [build_5] [ERROR] Build failed for UE %BLD_VERSION% %BLD_PLATFORM% %BLD_CONFIG%
     endlocal
     exit /b 1
