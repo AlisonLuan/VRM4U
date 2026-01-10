@@ -10,7 +10,8 @@ REM Resolve Unreal Engine installation path
 REM This replaces the hard-coded path with auto-detection + override support
 call "%~dp0resolve_ue_path.bat" %UE4VER% UE4BASE
 if not %errorlevel% == 0 (
-    echo [ERROR] Failed to resolve Unreal Engine path
+    echo [ERROR] Failed to resolve Unreal Engine %UE4VER% path
+    echo [ERROR] See error messages above for details
     goto err
 )
 

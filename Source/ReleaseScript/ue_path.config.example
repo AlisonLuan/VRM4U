@@ -24,5 +24,6 @@
 # Note: Do NOT include the version folder (UE_5.7, etc.) in this path.
 #       Do NOT add quotes around the path.
 #       Blank lines and lines starting with # are ignored.
+#       Uncomment and modify the example below:
 
-C:\Program Files\Epic Games
+# C:\Program Files\Epic Games

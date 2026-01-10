@@ -104,8 +104,8 @@ REM Try to detect via Epic Games Launcher metadata
 set LAUNCHER_DATA=%ProgramData%\Epic\UnrealEngineLauncher\LauncherInstalled.dat
 if exist "%LAUNCHER_DATA%" (
     echo [resolve_ue_path] Found Epic Games Launcher metadata: %LAUNCHER_DATA%
-    REM Try to parse JSON using PowerShell
-    for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "try { $data = Get-Content '%LAUNCHER_DATA%' -Raw | ConvertFrom-Json; $installs = $data.InstallationList | Where-Object { $_.AppName -like 'UE_*' }; if ($installs) { ($installs | Select-Object -First 1).InstallLocation } } catch { }"`) do (
+    REM Try to parse JSON using PowerShell with timeout protection
+    for /f "usebackq delims=" %%i in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; try { $data = Get-Content '%LAUNCHER_DATA%' -Raw -ErrorAction Stop | ConvertFrom-Json; $installs = $data.InstallationList | Where-Object { $_.AppName -like 'UE_*' }; if ($installs) { ($installs | Select-Object -First 1).InstallLocation } } catch { }"`) do (
         set FOUND_PATH=%%i
         if not "!FOUND_PATH!"=="" (
             echo [resolve_ue_path] Detected installation via Launcher metadata
@@ -115,6 +115,7 @@ if exist "%LAUNCHER_DATA%" (
 )
 
 REM Common installation locations to check
+set COMMON_PATHS_COUNT=5
 set COMMON_PATHS[0]=C:\Program Files\Epic Games
 set COMMON_PATHS[1]=D:\Program Files\Epic Games
 set COMMON_PATHS[2]=E:\Program Files\Epic Games
@@ -122,7 +123,8 @@ set COMMON_PATHS[3]=C:\Epic Games
 set COMMON_PATHS[4]=D:\Epic Games
 
 echo [resolve_ue_path] Scanning common installation locations...
-for /L %%i in (0,1,4) do (
+set /a MAX_INDEX=%COMMON_PATHS_COUNT%-1
+for /L %%i in (0,1,%MAX_INDEX%) do (
     set SCAN_PATH=!COMMON_PATHS[%%i]!
     if exist "!SCAN_PATH!" (
         echo [resolve_ue_path] Checking: !SCAN_PATH!
@@ -234,7 +236,8 @@ echo [resolve_ue_path] Attempted:
 echo   1. Environment variables: UE_ROOT, UE_ENGINE_DIR, UE5BASE, UE4BASE
 echo   2. Local config file: %CONFIG_FILE%
 echo   3. Auto-detection in common paths:
-for /L %%i in (0,1,4) do (
+set /a MAX_INDEX=%COMMON_PATHS_COUNT%-1
+for /L %%i in (0,1,%MAX_INDEX%) do (
     echo      - !COMMON_PATHS[%%i]!
 )
 echo   4. Epic Games Launcher metadata: %LAUNCHER_DATA%
