@@ -39,7 +39,7 @@ void FAnimNode_VrmConstraint::Initialize_AnyThread(const FAnimationInitializeCon
 	// UE 5.7+: Use explicit TSoftObjectPtr constructor to avoid deprecation warning
 	VrmMetaObject_Internal = TSoftObjectPtr<UVrmMetaObject>(VrmMetaObject);
 	if (VrmMetaObject_Internal == nullptr && EnableAutoSearchMetaData) {
-		VrmAssetListObject_Internal = VRMUtil::GetAssetListObject(VRMGetSkinnedAsset(Context.AnimInstanceProxy->GetSkelMeshComponent()));
+		VrmAssetListObject_Internal = TSoftObjectPtr<UVrmAssetListObject>(VRMUtil::GetAssetListObject(VRMGetSkinnedAsset(Context.AnimInstanceProxy->GetSkelMeshComponent())));
 		if (VrmAssetListObject_Internal) {
 			VrmMetaObject_Internal = TSoftObjectPtr<UVrmMetaObject>(VrmAssetListObject_Internal->VrmMetaObject);
 		}
