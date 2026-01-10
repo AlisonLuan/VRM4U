@@ -57,8 +57,14 @@ function Read-JsonFileSafe {
         Write-Host "[version.ps1] Error details: $_"
         Write-Host "[version.ps1] File excerpt (first 200 chars):"
         try {
-            $excerpt = (Get-Content -Path $FilePath -Raw -ErrorAction SilentlyContinue).Substring(0, [Math]::Min(200, $content.Length))
-            Write-Host $excerpt
+            $excerptContent = Get-Content -Path $FilePath -Raw -ErrorAction SilentlyContinue
+            if ($null -ne $excerptContent) {
+                $excerptText = [string]$excerptContent
+                $excerpt = $excerptText.Substring(0, [Math]::Min(200, $excerptText.Length))
+                Write-Host $excerpt
+            } else {
+                Write-Host "(File is empty or unreadable)"
+            }
         } catch {
             Write-Host "(Could not read file excerpt)"
         }
@@ -122,17 +128,18 @@ if ($TargetFilePath -and $TargetFilePath -ne "") {
     }
 }
 
-# Store the engine association for later use
-$a = [PSCustomObject]@{
-    EngineAssociation = $EngineVersion
-}
-
 # ============================================================================
 # Step 2: Modify VRM4U.uplugin based on engine version
 # ============================================================================
 # Determine the absolute path to VRM4U.uplugin
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$upluginPath = Join-Path $scriptDir "..\..\VRM4U.uplugin" | Resolve-Path
+$upluginPathCandidate = Join-Path $scriptDir "..\..\VRM4U.uplugin"
+$resolvedUpluginPath = Resolve-Path -Path $upluginPathCandidate -ErrorAction SilentlyContinue
+if (-not $resolvedUpluginPath) {
+    Write-Host "[version.ps1] ERROR: VRM4U.uplugin not found at expected path: $upluginPathCandidate"
+    exit 1
+}
+$upluginPath = $resolvedUpluginPath.ProviderPath
 
 Write-Host "[version.ps1] VRM4U.uplugin path: $upluginPath"
 
@@ -163,7 +170,7 @@ if ($EngineVersion -eq '4.27' -or $EngineVersion -eq '4.26' -or $EngineVersion -
     Write-Host "[version.ps1] UE $EngineVersion detected - removing plugin dependencies at indices 3, 2, 1"
     if ($upluginObj.Plugins -and $upluginObj.Plugins.Count -gt 3) {
         $PluginArrayList = [System.Collections.ArrayList]$upluginObj.Plugins
-        # Remove in reverse order to maintain correct indices
+        # Remove in descending order to maintain correct indices
         $PluginArrayList.RemoveAt(3)
         $PluginArrayList.RemoveAt(2)
         $PluginArrayList.RemoveAt(1)
@@ -182,7 +189,7 @@ if ($EngineVersion -eq '5.1' -or $EngineVersion -eq '5.0' -or
     Write-Host "[version.ps1] UE $EngineVersion detected - removing modules at indices 4, 3, 2"
     if ($upluginObj.Modules.Count -gt 4) {
         $ModuleArrayList = [System.Collections.ArrayList]$upluginObj.Modules
-        # Remove in reverse order to maintain correct indices
+        # Remove in descending order to maintain correct indices
         $ModuleArrayList.RemoveAt(4)
         $ModuleArrayList.RemoveAt(3)
         $ModuleArrayList.RemoveAt(2)
