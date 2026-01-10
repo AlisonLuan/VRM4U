@@ -8,6 +8,12 @@ if (-not (Test-Path $projectPath)) {
 $a = Get-Content $projectPath -Encoding UTF8 | ConvertFrom-Json
 $a
 
+# Ensure EngineAssociation property exists before trying to set it
+if (-not (Get-Member -InputObject $a -Name "EngineAssociation" -MemberType Properties)) {
+    Write-Host "[version.ps1] Warning: EngineAssociation property not found in project file - adding it"
+    $a | Add-Member -MemberType NoteProperty -Name "EngineAssociation" -Value ""
+}
+
 $a.EngineAssociation = $Args[0]
 
 if ($a.EngineAssociation -eq '4.23' -or $a.EngineAssociation -eq '4.22' -or $a.EngineAssociation -eq '4.21' -or $a.EngineAssociation -eq '4.20')

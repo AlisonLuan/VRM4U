@@ -3,6 +3,7 @@
 #include "VrmConvertRig.h"
 #include "VrmConvert.h"
 #include "VrmUtil.h"
+#include "VRM4ULoaderLog.h"
 
 #include "VrmAssetListObject.h"
 #include "VrmMetaObject.h"

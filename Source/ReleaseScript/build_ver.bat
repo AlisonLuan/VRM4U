@@ -62,7 +62,8 @@ if %UEMajorVersion% == 4 (
 )
 
 if %isUE4% == FALSE (
-del "..\..\..\VRM4U\Content\Util\Actor\latest\WBP_MorphTarget.uasset"
+del "..\..\..\VRM4U\Content\Util\Actor\latest\WBP_MorphTarget.uasset" 2>nul
+del "..\..\..\VRM4U\Content\Util\Actor\latest\WBP_MorphTargetUE5.uasset" 2>nul
 )
 
 if %isUE4% == TRUE (
