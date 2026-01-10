@@ -1,5 +1,10 @@
 @echo off
 REM ============================================================================
+REM Make script location-independent: always run relative to script directory
+REM ============================================================================
+cd /d %~dp0
+
+REM ============================================================================
 REM build_5.bat - Multi-version UE5 plugin build script with resilient handling
 REM
 REM This script builds VRM4U for multiple UE5 versions with configurable
@@ -14,6 +19,13 @@ REM Behavior:
 REM   - By default, skips missing versions with a warning
 REM   - Set STRICT_VERSIONS=1 to fail if any version is missing
 REM
+REM Usage:
+REM   build_5.bat
+REM
+REM Recommended invocation for full logging:
+REM   cmd /c build_5.bat > build_5_log.txt 2>&1
+REM
+REM Note: This captures all output (stdout and stderr) to a file for debugging.
 REM ============================================================================
 
 setlocal enabledelayedexpansion
