@@ -5,6 +5,16 @@ REM ============================================================================
 cd /d %~dp0
 
 REM ============================================================================
+REM Ensure _zip folder exists and sanitize date for safe filenames
+REM ============================================================================
+REM 1. Create the zip folder if it doesn't exist
+if not exist "..\..\..\..\_zip" mkdir "..\..\..\..\_zip"
+
+REM 2. Get date in YYYYMMDD format using PowerShell (locale-independent)
+REM    This avoids relying on the locale-specific %date% environment variable
+for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd"') do set "V_DATE=%%i"
+
+REM ============================================================================
 REM build_5.bat - Multi-version UE5 plugin build script with resilient handling
 REM
 REM This script builds VRM4U for multiple UE5 versions with configurable
@@ -30,7 +40,6 @@ REM ============================================================================
 
 setlocal enabledelayedexpansion
 
-set V_DATE=%date:~0,4%%date:~5,2%%date:~8,2%
 set BUILD_SCRIPT=build_ver2.bat
 
 REM ============================================================================
