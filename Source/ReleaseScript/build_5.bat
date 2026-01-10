@@ -5,6 +5,19 @@ REM ============================================================================
 cd /d %~dp0
 
 REM ============================================================================
+REM Ensure _zip folder exists and sanitize date for safe filenames
+REM ============================================================================
+REM 1. Create the zip folder if it doesn't exist
+if not exist "..\..\..\..\_zip" mkdir "..\..\..\..\_zip"
+
+REM 2. Extract date in YYYYMMDD format first, then sanitize for filename safety
+REM    Some locales have %date% as YYYY/MM/DD or YYYY-MM-DD or other formats
+REM    We extract based on position then sanitize slashes and spaces
+set V_DATE=%date:~0,4%%date:~5,2%%date:~8,2%
+set V_DATE=%V_DATE:/=-%
+set V_DATE=%V_DATE: =_%
+
+REM ============================================================================
 REM build_5.bat - Multi-version UE5 plugin build script with resilient handling
 REM
 REM This script builds VRM4U for multiple UE5 versions with configurable
@@ -30,7 +43,6 @@ REM ============================================================================
 
 setlocal enabledelayedexpansion
 
-set V_DATE=%date:~0,4%%date:~5,2%%date:~8,2%
 set BUILD_SCRIPT=build_ver2.bat
 
 REM ============================================================================
