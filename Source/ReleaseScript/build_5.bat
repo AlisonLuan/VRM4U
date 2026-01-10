@@ -10,12 +10,9 @@ REM ============================================================================
 REM 1. Create the zip folder if it doesn't exist
 if not exist "..\..\..\..\_zip" mkdir "..\..\..\..\_zip"
 
-REM 2. Extract date in YYYYMMDD format first, then sanitize for filename safety
-REM    Some locales have %date% as YYYY/MM/DD or YYYY-MM-DD or other formats
-REM    We extract based on position then sanitize slashes and spaces
-set V_DATE=%date:~0,4%%date:~5,2%%date:~8,2%
-set V_DATE=%V_DATE:/=-%
-set V_DATE=%V_DATE: =_%
+REM 2. Get date in YYYYMMDD format using PowerShell (locale-independent)
+REM    This avoids relying on the locale-specific %date% environment variable
+for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd"') do set "V_DATE=%%i"
 
 REM ============================================================================
 REM build_5.bat - Multi-version UE5 plugin build script with resilient handling
