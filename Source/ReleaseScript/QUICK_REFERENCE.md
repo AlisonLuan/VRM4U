@@ -1,6 +1,6 @@
-# Quick Reference: UE Path Configuration
+# Quick Reference: VRM4U Build Scripts
 
-This is a quick reference for configuring Unreal Engine paths for VRM4U build scripts.
+This is a quick reference for configuring and using VRM4U build scripts.
 
 ## TL;DR
 
@@ -10,6 +10,8 @@ This is a quick reference for configuring Unreal Engine paths for VRM4U build sc
 cd Source\ReleaseScript
 build_5.bat
 ```
+
+**Have only some UE versions installed?** The script will automatically skip missing versions and continue!
 
 ## When Auto-Detection Fails
 
@@ -105,8 +107,53 @@ Configure as: E:\Engines
 - Run from correct directory: `Source\ReleaseScript\`
 - Use `call resolve_ue_path.bat 5.7` not just `resolve_ue_path.bat 5.7`
 
+## Version Configuration
+
+### Choose Which Versions to Build
+
+**Method 1: Environment Variable (Quick Override)**
+
+```batch
+set BUILD_UE_VERSIONS=5.7,5.6
+build_5.bat
+```
+
+**Method 2: versions.txt File (Persistent Config)**
+
+```batch
+cd Source\ReleaseScript
+copy versions.txt.example versions.txt
+notepad versions.txt
+REM Uncomment the versions you have installed
+build_5.bat
+```
+
+**Method 3: Use Default (Tries all: 5.7, 5.6, 5.5, 5.4, 5.3, 5.2)**
+
+```batch
+build_5.bat
+REM Will skip versions you don't have installed
+```
+
+### Skip vs Strict Mode
+
+**Default: Skip missing versions** (recommended for local development)
+```batch
+build_5.bat
+REM Builds what you have, skips the rest
+```
+
+**Strict: Fail if any version is missing** (recommended for CI)
+```batch
+set STRICT_VERSIONS=1
+build_5.bat
+REM Fails immediately if any configured version is not installed
+```
+
 ## More Information
 
+- See [BUILD_VERSION_CONFIG.md](BUILD_VERSION_CONFIG.md) for detailed version configuration guide
+- See [TEST_PLAN_VERSIONS.md](TEST_PLAN_VERSIONS.md) for testing version handling
 - See [BUILDING.md](../../BUILDING.md) for complete documentation
 - See [VERSION_SCRIPT_GUIDE.md](VERSION_SCRIPT_GUIDE.md) for details on version.ps1 usage
 - See [GIT_BEHAVIOR_GUIDE.md](GIT_BEHAVIOR_GUIDE.md) for git safety and RELEASESCRIPT_GIT_RESET
