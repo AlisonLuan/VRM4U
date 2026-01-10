@@ -38,6 +38,8 @@ FAnimNode_VrmVMC::~FAnimNode_VrmVMC()
 void FAnimNode_VrmVMC::Initialize_AnyThread(const FAnimationInitializeContext& Context) {
 	Super::Initialize_AnyThread(Context);
 
+#if UE_VERSION_OLDER_THAN(5,7,0)
+	// UE < 5.7: Implicit raw pointer to TSoftObjectPtr conversion is allowed
 	VrmMetaObject_Internal = VrmMetaObject;
 	if (VrmMetaObject_Internal == nullptr && EnableAutoSearchMetaData) {
 		VrmAssetListObject_Internal = VRMUtil::GetAssetListObject(VRMGetSkinnedAsset(Context.AnimInstanceProxy->GetSkelMeshComponent()));
@@ -45,6 +47,16 @@ void FAnimNode_VrmVMC::Initialize_AnyThread(const FAnimationInitializeContext& C
 			VrmMetaObject_Internal = VrmAssetListObject_Internal->VrmMetaObject;
 		}
 	}
+#else
+	// UE 5.7+: Use explicit TSoftObjectPtr construction (implicit conversion deprecated)
+	VrmMetaObject_Internal = TSoftObjectPtr<UVrmMetaObject>(VrmMetaObject);
+	if (VrmMetaObject_Internal == nullptr && EnableAutoSearchMetaData) {
+		VrmAssetListObject_Internal = TSoftObjectPtr<UVrmAssetListObject>(VRMUtil::GetAssetListObject(VRMGetSkinnedAsset(Context.AnimInstanceProxy->GetSkelMeshComponent())));
+		if (VrmAssetListObject_Internal) {
+			VrmMetaObject_Internal = TSoftObjectPtr<UVrmMetaObject>(VrmAssetListObject_Internal->VrmMetaObject);
+		}
+	}
+#endif
 
 	UVRM4U_VMCSubsystem* subsystem = GEngine->GetEngineSubsystem<UVRM4U_VMCSubsystem>();
 	if (subsystem == nullptr) return;

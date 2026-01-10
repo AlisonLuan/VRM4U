@@ -322,7 +322,13 @@ bool FVrmAnimInstanceCopyProxy::Evaluate(FPoseContext& Output) {
 
 				auto& constraint = *Node_Constraint.Get();
 
+#if UE_VERSION_OLDER_THAN(5,7,0)
+				// UE < 5.7: Implicit raw pointer to TSoftObjectPtr conversion is allowed
 				constraint.VrmMetaObject_Internal = dstMeta;
+#else
+				// UE 5.7+: Use explicit TSoftObjectPtr construction (implicit conversion deprecated)
+				constraint.VrmMetaObject_Internal = TSoftObjectPtr<UVrmMetaObject>(dstMeta);
+#endif
 				constraint.bCallByAnimInstance = true;
 
 				FAnimationInitializeContext InitContext(this);
@@ -385,7 +391,13 @@ bool FVrmAnimInstanceCopyProxy::Evaluate(FPoseContext& Output) {
 
 				auto& springBone = *Node_SpringBone.Get();
 
+#if UE_VERSION_OLDER_THAN(5,7,0)
+				// UE < 5.7: Implicit raw pointer to TSoftObjectPtr conversion is allowed
 				springBone.VrmMetaObject_Internal = dstMeta;
+#else
+				// UE 5.7+: Use explicit TSoftObjectPtr construction (implicit conversion deprecated)
+				springBone.VrmMetaObject_Internal = TSoftObjectPtr<UVrmMetaObject>(dstMeta);
+#endif
 				springBone.bCallByAnimInstance = true;
 				springBone.CurrentDeltaTime = CurrentDeltaTime;
 

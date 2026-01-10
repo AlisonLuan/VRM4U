@@ -390,7 +390,7 @@ bool VRMConverter::ConvertMorphTarget(UVrmAssetListObject *vrmAssetList) {
 	// Note: The morph target names need to be preserved for the skeletal mesh.
 	// In UE 5.7+, this is handled via the MeshDescription / import data path,
 	// which must be explicitly committed so it is saved and survives editor restart.
-	sk->SetLODImportedDataVersions(0, ESkeletalMeshGeoImportVersions::Before_Versionning, ESkeletalMeshSkinningImportVersions::Before_Versionning);
+	// SetLODImportedDataVersions is deprecated in UE 5.7+ due to MeshDescription migration.
 
 	// Commit the MeshDescription for LOD 0 so that editor/import data (including
 	// morph target information managed by the engine) is persisted correctly.
