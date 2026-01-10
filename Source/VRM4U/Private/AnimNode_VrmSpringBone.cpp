@@ -84,12 +84,12 @@ void FAnimNode_VrmSpringBone::Initialize_AnyThread(const FAnimationInitializeCon
 		}
 	}
 #else
-	// UE 5.7+: Direct assignment (explicit TSoftObjectPtr construction deprecated)
-	VrmMetaObject_Internal = VrmMetaObject;
+	// UE 5.7+: Use explicit TSoftObjectPtr constructor to avoid deprecation warning
+	VrmMetaObject_Internal = TSoftObjectPtr<UVrmMetaObject>(VrmMetaObject);
 	if (VrmMetaObject_Internal == nullptr && EnableAutoSearchMetaData) {
 		VrmAssetListObject_Internal = VRMUtil::GetAssetListObject(VRMGetSkinnedAsset(Context.AnimInstanceProxy->GetSkelMeshComponent()));
 		if (VrmAssetListObject_Internal) {
-			VrmMetaObject_Internal = VrmAssetListObject_Internal->VrmMetaObject;
+			VrmMetaObject_Internal = TSoftObjectPtr<UVrmMetaObject>(VrmAssetListObject_Internal->VrmMetaObject);
 		}
 	}
 #endif
