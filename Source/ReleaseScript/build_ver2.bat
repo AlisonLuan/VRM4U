@@ -104,6 +104,7 @@ REM ============================================================================
 if "%RELEASESCRIPT_GIT_RESET%"=="1" (
     echo [build_ver2] RELEASESCRIPT_GIT_RESET=1 detected - performing git reset --hard HEAD
     echo [build_ver2] WARNING: This will discard all uncommitted changes in your working directory!
+    echo [build_ver2] Resetting to current HEAD...
     git reset --hard HEAD
     if not %errorlevel% == 0 (
         echo [WARNING] git reset failed - continuing anyway
@@ -112,7 +113,19 @@ if "%RELEASESCRIPT_GIT_RESET%"=="1" (
     echo [build_ver2] Skipping git reset (to enable, set RELEASESCRIPT_GIT_RESET=1)
 )
 
-powershell -ExecutionPolicy RemoteSigned .\version.ps1 \"%UE5VER%\"
+REM ============================================================================
+REM Update version information in VRM4U.uplugin
+REM ============================================================================
+REM For plugin-only builds (build_ver2.bat), we only need to modify the .uplugin file.
+REM No .uproject file is involved since we use UAT BuildPlugin directly.
+REM ============================================================================
+
+echo [build_ver2] Running version.ps1 to update plugin for UE %UE5VER%...
+powershell -ExecutionPolicy RemoteSigned .\version.ps1 "%UE5VER%"
+if not %errorlevel% == 0 (
+    echo [ERROR] version.ps1 failed
+    goto err
+)
 
 set UE5PATH=UE_%UE5VER%
 

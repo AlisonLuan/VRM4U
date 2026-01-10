@@ -107,4 +107,7 @@ Configure as: E:\Engines
 
 ## More Information
 
-See [BUILDING.md](../../BUILDING.md) for complete documentation.
+- See [BUILDING.md](../../BUILDING.md) for complete documentation
+- See [VERSION_SCRIPT_GUIDE.md](VERSION_SCRIPT_GUIDE.md) for details on version.ps1 usage
+- See [GIT_BEHAVIOR_GUIDE.md](GIT_BEHAVIOR_GUIDE.md) for git safety and RELEASESCRIPT_GIT_RESET
+- See [TEST_PLAN.md](TEST_PLAN.md) for testing the build scripts
