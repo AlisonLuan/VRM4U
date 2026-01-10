@@ -104,12 +104,18 @@ REM Try to detect via Epic Games Launcher metadata
 set LAUNCHER_DATA=%ProgramData%\Epic\UnrealEngineLauncher\LauncherInstalled.dat
 if exist "%LAUNCHER_DATA%" (
     echo [resolve_ue_path] Found Epic Games Launcher metadata: %LAUNCHER_DATA%
-    REM Try to parse JSON using PowerShell with timeout protection
+    REM Try to parse JSON using PowerShell with basic error handling
     for /f "usebackq delims=" %%i in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; try { $data = Get-Content '%LAUNCHER_DATA%' -Raw -ErrorAction Stop | ConvertFrom-Json; $installs = $data.InstallationList | Where-Object { $_.AppName -like 'UE_*' }; if ($installs) { ($installs | Select-Object -First 1).InstallLocation } } catch { }"`) do (
-        set FOUND_PATH=%%i
-        if not "!FOUND_PATH!"=="" (
-            echo [resolve_ue_path] Detected installation via Launcher metadata
-            goto validate_path
+        set "RAW_FOUND_PATH=%%i"
+        if not "!RAW_FOUND_PATH!"=="" (
+            REM Launcher InstallLocation usually includes the UE_<version> folder; strip it to get the base path
+            for %%P in ("!RAW_FOUND_PATH!") do set "FOUND_PATH=%%~dpP"
+            REM Remove trailing backslash
+            if "!FOUND_PATH:~-1!"=="\" set "FOUND_PATH=!FOUND_PATH:~0,-1!"
+            if not "!FOUND_PATH!"=="" (
+                echo [resolve_ue_path] Detected installation via Launcher metadata
+                goto validate_path
+            )
         )
     )
 )
