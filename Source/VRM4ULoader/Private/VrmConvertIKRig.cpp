@@ -616,6 +616,9 @@ public:
 #else
 #if VRM4U_USE_EDITOR_RIG
 		UIKRetargeterController* c = UIKRetargeterController::GetController(Retargeter);
+
+#if UE_VERSION_OLDER_THAN(5,7,0)
+		// UE < 5.7: Use direct GetRetargetChainSettings/SetRetargetChainSettings
 		{
 			auto cs = c->GetRetargetChainSettings(TEXT("Root"));
 			cs.FK.TranslationMode = ERetargetTranslationMode::GloballyScaled;
@@ -636,6 +639,38 @@ public:
 				c->SetRetargetChainSettings(*s, cs);
 			}
 		}
+#else
+		// UE 5.7+: Use chain op controller to access chain settings
+		{
+			auto* ChainOpController = c->GetChainOpController(TEXT("Root"));
+			if (ChainOpController)
+			{
+				auto cs = ChainOpController->GetSettings();
+				cs.FK.TranslationMode = ERetargetTranslationMode::GloballyScaled;
+				ChainOpController->SetSettings(cs);
+			}
+		}
+		{
+			TArray<FString> table = {
+				TEXT("FootRootIK"),
+				TEXT("LeftFootIK"),
+				TEXT("RightFootIK"),
+				TEXT("HandRootIK"),
+				TEXT("LeftHandIK"),
+				TEXT("RightHandIK"),
+			};
+			for (auto s : table) {
+				auto* ChainOpController = c->GetChainOpController(*s);
+				if (ChainOpController)
+				{
+					auto cs = ChainOpController->GetSettings();
+					cs.FK.TranslationMode = ERetargetTranslationMode::GloballyScaled;
+					ChainOpController->SetSettings(cs);
+				}
+			}
+		}
+#endif // UE_VERSION_OLDER_THAN(5,7,0)
+
 		/*
 		{
 			TArray<FString> table = {
@@ -664,8 +699,12 @@ public:
 		*/
 
 #else
+		// Non-editor or runtime: Use deprecated GetChainMapByName (still works in runtime)
 		auto r = Retargeter->GetChainMapByName(TEXT("Root"));
-		r->Settings.FK.TranslationMode = ERetargetTranslationMode::GloballyScaled;
+		if (r)
+		{
+			r->Settings.FK.TranslationMode = ERetargetTranslationMode::GloballyScaled;
+		}
 #endif // rig
 #endif // 5.2
 	}
