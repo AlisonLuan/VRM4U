@@ -263,7 +263,7 @@ public:
 	// UE 5.7+: New FAssetRegistryTagsContext signature
 	virtual void GetAssetRegistryTags(FAssetRegistryTagsContext Context) const override;
 #endif
-	// Import data for this
+	// Import data for this VRM asset (editor-only metadata about the source file, used by the asset registry and reimport pipeline).
 	void WaitUntilAsyncPropertyReleased() const;
 
 
