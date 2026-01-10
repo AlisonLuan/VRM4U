@@ -103,12 +103,25 @@ set BUILD="%UE5BASE%\%UE5PATH%\Engine\Build\BatchFiles\RunUAT.bat"
 
 ::: delete
 
-REM Parse version number (suppress errors for decimal versions like 5.7)
-set /a UEVersion=%UE5VER% 2>nul
-REM Use wsl for version math (multiply by 100)
+REM Parse version components (supports decimal versions like 5.7)
+for /f "tokens=1,2 delims=." %%a in ("%UE5VER%") do (
+    set UEMajorVersion=%%a
+    set UEMinorVersion=%%b
+)
+
+REM Try to use WSL + bc for version math (multiply by 100, e.g., 5.7 -> 570)
+set "UEVersion100="
 for /f %%i in ('wsl echo "%UE5VER% * 100" 2^>nul ^| bc 2^>nul') do set UEVersion100=%%i
-REM Extract major version (part before the dot)
-for /f "tokens=1 delims=." %%a in ("%UE5VER%") do set UEMajorVersion=%%a
+
+REM Fallback if WSL or bc are not available: compute UEVersion100 using batch math
+if not defined UEVersion100 (
+    REM Default minor version to 0 if not present
+    if not defined UEMinorVersion set UEMinorVersion=0
+    set /a UEVersion100=UEMajorVersion*100+UEMinorVersion
+)
+
+REM Also keep an integer major version (e.g., 5 from 5.7) for any simple comparisons
+set /a UEVersion=UEMajorVersion 2>nul
 
 
 del "..\..\..\VRM4U\Content\Util\Actor\latest\WBP_MorphTarget.uasset"

@@ -281,7 +281,7 @@ Each package contains:
 - **Custom path:** If you need a specific location, ensure:
   1. The path exists or can be created
   2. You have write permissions
-  3. The path uses backslashes on Windows (e.g., `C:\Output` not `C:/Output`)
+  3. The path is a valid Windows path (both `C:\Output` and `C:/Output` are accepted; the script normalizes slashes)
 
 **Example of setting a custom output path:**
 ```batch
@@ -417,16 +417,7 @@ Set a system or user environment variable:
 
 **Note:** The legacy `OUTPATH` environment variable is also supported for backward compatibility, but `VRM4U_OUTPATH` takes precedence if both are set.
 
-### Custom Output Directory (Legacy Method - Not Recommended)
-
 **Deprecated:** Editing the script directly is no longer necessary. Use `VRM4U_OUTPATH` environment variable instead.
-
-~~Edit the build scripts to change `OUTPATH`:~~
-
-```batch
-REM In build_ver2.bat (DEPRECATED - use VRM4U_OUTPATH instead)
-set OUTPATH=d:/tmp/_out  REM Change this to your preferred location
-```
 
 ### Building from UE Source Build
 
