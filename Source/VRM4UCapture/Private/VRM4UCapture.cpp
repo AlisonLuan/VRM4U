@@ -2,6 +2,7 @@
 
 #include "VRM4UCapture.h"
 #include "CoreMinimal.h"
+#include "HAL/IConsoleManager.h"
 #include "VRM4UCaptureLog.h"
 #include "Modules/ModuleManager.h"
 #include "Internationalization/Internationalization.h"

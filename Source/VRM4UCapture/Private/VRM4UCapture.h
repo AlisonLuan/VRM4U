@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HAL/IConsoleManager.h"
 //#include "VRMImporterModule.h"
 
 // Console variable for VMC debugging - defined in VRM4UCapture.cpp
