@@ -30,6 +30,7 @@ REM ============================================================================
 if "%RELEASESCRIPT_GIT_RESET%"=="1" (
     echo [build_ver] RELEASESCRIPT_GIT_RESET=1 detected - performing git reset --hard HEAD
     echo [build_ver] WARNING: This will discard all uncommitted changes in your working directory!
+    echo [build_ver] Resetting to current HEAD...
     git reset --hard HEAD
     if not %errorlevel% == 0 (
         echo [WARNING] git reset failed - continuing anyway
@@ -38,7 +39,20 @@ if "%RELEASESCRIPT_GIT_RESET%"=="1" (
     echo [build_ver] Skipping git reset (to enable, set RELEASESCRIPT_GIT_RESET=1)
 )
 
-powershell -ExecutionPolicy RemoteSigned .\version.ps1 \"%UE4VER%\"
+REM ============================================================================
+REM Update version information
+REM ============================================================================
+REM For project-based builds (build_ver.bat), update both .uproject and .uplugin.
+REM Pass the absolute path to the .uproject file.
+REM ============================================================================
+
+set PROJECTNAME="../../../../MyProjectBuildScript.uproject"
+echo [build_ver] Running version.ps1 to update project file for UE %UE4VER%...
+powershell -ExecutionPolicy RemoteSigned .\version.ps1 "%UE4VER%" %PROJECTNAME%
+if not %errorlevel% == 0 (
+    echo [ERROR] version.ps1 failed
+    goto err
+)
 
 powershell -ExecutionPolicy RemoteSigned .\delIntermediate.ps1
 
@@ -48,7 +62,6 @@ set UE4PATH=UE_%UE4VER%
 set CLEAN="%UE4BASE%\%UE4PATH%\Engine\Build\BatchFiles\Clean.bat"
 set BUILD="%UE4BASE%\%UE4PATH%\Engine\Build\BatchFiles\Build.bat"
 set REBUILD="%UE4BASE%\%UE4PATH%\Engine\Build\BatchFiles\Rebuild.bat"
-set PROJECTNAME="../../../../MyProjectBuildScript.uproject"
 
 ::: delete
 
