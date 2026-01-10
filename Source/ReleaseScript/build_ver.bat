@@ -1,3 +1,8 @@
+@echo off
+REM ============================================================================
+REM Make script location-independent: always run relative to script directory
+REM ============================================================================
+cd /d %~dp0
 
 set UE4VER=%1
 set PLATFORM=%2

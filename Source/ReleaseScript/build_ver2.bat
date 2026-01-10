@@ -1,3 +1,30 @@
+@echo off
+REM ============================================================================
+REM Make script location-independent: always run relative to script directory
+REM ============================================================================
+cd /d %~dp0
+
+REM ============================================================================
+REM build_ver2.bat - Single-version UE plugin build script
+REM
+REM Usage:
+REM   build_ver2.bat <UEVersion> <Platform> <Configuration> <ZipFileName>
+REM
+REM Arguments:
+REM   <UEVersion>     - Unreal Engine version (e.g., 5.7, 5.6, 5.5)
+REM   <Platform>      - Target platform (e.g., Win64, Android, Linux)
+REM   <Configuration> - Build configuration (e.g., Shipping, Development, Debug)
+REM   <ZipFileName>   - Output zip file name (e.g., VRM4U_5_7_20260110.zip)
+REM
+REM Examples:
+REM   build_ver2.bat 5.7 Win64 Shipping VRM4U_5_7_20260110.zip
+REM   build_ver2.bat 5.6 Android Development VRM4U_5_6_android_20260110.zip
+REM
+REM Recommended invocation for full logging:
+REM   cmd /c build_ver2.bat 5.7 Win64 Shipping VRM4U_5_7.zip > build_log.txt 2>&1
+REM
+REM Note: This captures all output (stdout and stderr) to a file for debugging.
+REM ============================================================================
 
 set UE5VER=%1
 set PLATFORM=%2
@@ -181,12 +208,37 @@ del "..\..\..\VRM4U\Source\VRM4URender\VRM4URender.Build.cs"
 call %BUILD% BuildPlugin -plugin=%UPLUGIN% -package=%OUTPATH% -TargetPlatforms=%PLATFORM% -clientconfig=%BUILDTYPE% %UPROJECT%
 
 if not %errorlevel% == 0 (
-    echo [ERROR] :P
+    echo [ERROR] ========================================
+    echo [ERROR] UAT BuildPlugin failed
+    echo [ERROR] ========================================
+    echo [ERROR] The Unreal Automation Tool (UAT) BuildPlugin command failed.
+    echo [ERROR] This usually indicates a compilation error or missing dependencies.
+    echo.
+    echo [ERROR] To diagnose:
+    echo [ERROR]   1. Check the UAT log output above for specific error messages
+    echo [ERROR]   2. Verify that UE %UE5VER% is correctly installed
+    echo [ERROR]   3. Ensure all plugin dependencies are available
+    echo.
     goto err
 )
 
 
-powershell -ExecutionPolicy RemoteSigned .\compress2.ps1 %ZIPNAME% %OUTPATH%
+call powershell -ExecutionPolicy RemoteSigned -File "%~dp0compress2.ps1" "%ZIPNAME%" "%OUTPATH%"
+
+if not %errorlevel% == 0 (
+    echo [ERROR] ========================================
+    echo [ERROR] Compression failed
+    echo [ERROR] ========================================
+    echo [ERROR] The compress2.ps1 script failed to create the zip package.
+    echo [ERROR] See error messages above from the compression script.
+    echo.
+    echo [ERROR] Common causes:
+    echo [ERROR]   - Insufficient disk space
+    echo [ERROR]   - Destination directory is not writable
+    echo [ERROR]   - Build output directory is missing or invalid
+    echo.
+    goto err
+)
 
 
 
