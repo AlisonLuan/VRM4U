@@ -38,9 +38,9 @@ function Write-CompressLog {
     param([string]$Message, [string]$Level = "INFO")
     $timestamp = Get-Date -Format "HH:mm:ss"
     $prefix = switch ($Level) {
-        "ERROR" { "[compress2] [ERROR]" }
-        "WARNING" { "[compress2] [WARNING]" }
-        default { "[compress2]" }
+        "ERROR" { "[$timestamp] [compress2] [ERROR]" }
+        "WARNING" { "[$timestamp] [compress2] [WARNING]" }
+        default { "[$timestamp] [compress2]" }
     }
     Write-Host "$prefix $Message"
 }
