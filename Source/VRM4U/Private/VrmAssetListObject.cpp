@@ -69,6 +69,8 @@ void UVrmAssetListObject::CopyMember(UVrmAssetListObject *dst) const {
 }
 
 #if WITH_EDITOR
+#if UE_VERSION_OLDER_THAN(5,7,0)
+// UE < 5.7: Use legacy TArray<FAssetRegistryTag> signature
 void UVrmAssetListObject::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
 {
 	if (AssetImportData)
@@ -79,6 +81,18 @@ void UVrmAssetListObject::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTag
 	}
 	Super::GetAssetRegistryTags(OutTags);
 }
+#else
+// UE 5.7+: Use new FAssetRegistryTagsContext signature
+void UVrmAssetListObject::GetAssetRegistryTags(FAssetRegistryTagsContext Context) const
+{
+	if (AssetImportData)
+	{
+		Context.AddTag(FAssetRegistryTag(SourceFileTagName(), AssetImportData->GetSourceData().ToJson(), FAssetRegistryTag::TT_Hidden));
+		Context.AddTag(FAssetRegistryTag("VRM4U", SourceFileTagName().ToString(), FAssetRegistryTag::TT_Hidden));
+	}
+	Super::GetAssetRegistryTags(Context);
+}
+#endif
 
 void UVrmAssetListObject::WaitUntilAsyncPropertyReleased() const {
 	if (IsValid(SkeletalMesh) == false) {

@@ -373,6 +373,8 @@ bool VRMConverter::ConvertMorphTarget(UVrmAssetListObject *vrmAssetList) {
 	// on Immediate
 	VRMSetUseLegacyMeshDerivedDataKey(sk, true);
 
+#if UE_VERSION_OLDER_THAN(5,7,0)
+	// UE < 5.7: Use deprecated LoadLODImportedData/SaveLODImportedData
 	FSkeletalMeshImportData RawMesh;
 	sk->LoadLODImportedData(0, RawMesh);
 
@@ -383,6 +385,17 @@ bool VRMConverter::ConvertMorphTarget(UVrmAssetListObject *vrmAssetList) {
 	sk->SaveLODImportedData(0, RawMesh);
 
 	sk->SetLODImportedDataVersions(0, ESkeletalMeshGeoImportVersions::Before_Versionning, ESkeletalMeshSkinningImportVersions::Before_Versionning);
+#else
+	// UE 5.7+: Use MeshDescription API instead of deprecated methods
+	// Note: The morph target names need to be preserved for the skeletal mesh.
+	// In UE 5.7+, this is handled via the MeshDescription / import data path,
+	// which must be explicitly committed so it is saved and survives editor restart.
+	sk->SetLODImportedDataVersions(0, ESkeletalMeshGeoImportVersions::Before_Versionning, ESkeletalMeshSkinningImportVersions::Before_Versionning);
+
+	// Commit the MeshDescription for LOD 0 so that editor/import data (including
+	// morph target information managed by the engine) is persisted correctly.
+	sk->CommitMeshDescription(0);
+#endif
 
 #endif
 #endif // editor

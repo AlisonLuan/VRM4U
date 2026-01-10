@@ -131,8 +131,12 @@ FString VRMUtil::MakeName(const FString& str, bool IsJoint) {
 		++InvalidChar;
 	}
 	return TmpName;
-#else
+#elif	UE_VERSION_OLDER_THAN(5,7,0)
+	// UE 5.3-5.6: Use MakeName (deprecated in 5.7)
 	return UE::Interchange::MakeName(str, IsJoint);
+#else
+	// UE 5.7+: Use MakeSanitizedName (replaces deprecated MakeName)
+	return UE::Interchange::MakeSanitizedName(str, IsJoint);
 #endif
 }
 
