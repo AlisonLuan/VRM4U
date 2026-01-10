@@ -115,7 +115,99 @@ C:\Program Files\Epic Games
 
 **Note**: Do NOT include the version folder (like `UE_5.7`) in the path. The scripts will append the appropriate version automatically.
 
-### 3. Run Build Scripts
+### 3. Configure Which Versions to Build (Optional)
+
+**NEW**: The build scripts now support flexible version configuration with resilient handling of missing UE installations.
+
+#### Default Behavior (Recommended for Most Users)
+
+By default, the scripts will:
+- Try to build all supported versions (5.7, 5.6, 5.5, 5.4, 5.3, 5.2)
+- **Skip missing versions** with a clear warning
+- Continue building versions that ARE installed
+
+Just run the script - it will build what you have:
+
+```batch
+cd Source\ReleaseScript
+build_5.bat
+```
+
+Output example:
+```
+[build_5] Processing UE 5.7
+[build_5] UE 5.7 found - proceeding with builds
+[build_5] Building: UE 5.7 / Win64 / Shipping -> VRM4U_5_7_20250110.zip
+...
+[build_5] WARNING: UE 5.6 not installed
+[build_5] Skipping UE 5.6 and continuing...
+...
+[build_5] Build Summary
+[build_5] Versions built: 1
+[build_5]   > 5.7
+[build_5] Versions skipped: 5
+[build_5]   > 5.6, 5.5, 5.4, 5.3, 5.2
+```
+
+#### Option A: Environment Variable (Best for CI/One-Off Builds)
+
+Specify exactly which versions to build:
+
+```batch
+REM Build only specific versions
+set BUILD_UE_VERSIONS=5.7,5.6
+cd Source\ReleaseScript
+build_5.bat
+```
+
+#### Option B: versions.txt File (Best for Persistent Local Config)
+
+Create a persistent configuration file:
+
+```batch
+cd Source\ReleaseScript
+copy versions.txt.example versions.txt
+notepad versions.txt
+```
+
+Edit `versions.txt` to contain your installed versions:
+```
+# My installed UE versions
+5.7
+5.6
+# 5.5  <- commented out, not installed
+```
+
+Then run the build normally:
+```batch
+build_5.bat
+```
+
+#### Configuration Precedence
+
+1. **BUILD_UE_VERSIONS** environment variable (highest priority)
+2. **versions.txt** file
+3. **Default list** (5.7, 5.6, 5.5, 5.4, 5.3, 5.2) (lowest priority)
+
+#### Strict Mode (Recommended for CI)
+
+By default, missing versions are skipped. For CI/release builds where you want to ensure ALL versions are built:
+
+```batch
+set STRICT_VERSIONS=1
+set BUILD_UE_VERSIONS=5.7,5.6,5.5
+cd Source\ReleaseScript
+build_5.bat
+```
+
+In strict mode:
+- Script **fails immediately** if any configured version is missing
+- Provides clear error message about what's missing and how to fix it
+- Exit code 1 (failure)
+
+**See [Source/ReleaseScript/BUILD_VERSION_CONFIG.md](Source/ReleaseScript/BUILD_VERSION_CONFIG.md) for detailed configuration guide.**
+
+### 4. Run Build Scripts
 
 #### Build All UE5 Versions
 
