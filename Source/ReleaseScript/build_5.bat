@@ -106,6 +106,7 @@ REM ============================================================================
 
 REM Sanitize VERSION_LIST to prevent command injection
 REM Remove potentially dangerous metacharacters before iteration
+REM Convert comma-separated list to space-separated for FOR loop iteration
 set "SAFE_VERSION_LIST=%VERSION_LIST%"
 set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:&=%"
 set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:|=%"
@@ -114,11 +115,20 @@ set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:<=%"
 set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:(=%"
 set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:)=%"
 set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:^=%"
-set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:%%=%"
 set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:;=%"
 set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:`=%"
+REM Convert commas to spaces for FOR loop (preserve dots in version numbers like 5.7)
+set "SAFE_VERSION_LIST=%SAFE_VERSION_LIST:,= %"
+
+REM Debug output to verify version list processing
+echo [build_5] DEBUG: VERSION_LIST='%VERSION_LIST%'
+echo [build_5] DEBUG: SAFE_VERSION_LIST='%SAFE_VERSION_LIST%'
+
+REM Guard: Track if loop executes at least once
+set LOOP_EXECUTED=0
 
 for %%V in (%SAFE_VERSION_LIST%) do (
+    set /a LOOP_EXECUTED+=1
     set CURRENT_VERSION=%%V
     echo.
     echo [build_5] ========================================
@@ -183,6 +193,22 @@ for %%V in (%SAFE_VERSION_LIST%) do (
             )
         )
     )
+)
+
+REM ============================================================================
+REM Guard: Verify loop executed at least once if VERSION_LIST contains versions
+REM ============================================================================
+
+if !LOOP_EXECUTED! == 0 (
+    echo.
+    echo [build_5] ========================================
+    echo [build_5] [ERROR] Version list loop did not execute!
+    echo [build_5] ========================================
+    echo [build_5] VERSION_LIST: %VERSION_LIST%
+    echo [build_5] SAFE_VERSION_LIST: %SAFE_VERSION_LIST%
+    echo [build_5] This indicates a scripting bug in version list processing.
+    echo [build_5] ========================================
+    goto err
 )
 
 REM ============================================================================
