@@ -21,6 +21,11 @@
 #   D:\Epic Games
 #   E:\UnrealEngine
 #
+# All of these should have subdirectories like:
+#   <your_path>\UE_5.7\Engine\...
+#   <your_path>\UE_5.6\Engine\...
+#   <your_path>\UE_4.27\Engine\...
+#
 # Note: Do NOT include the version folder (UE_5.7, etc.) in this path.
 #       Do NOT add quotes around the path.
 #       Blank lines and lines starting with # are ignored.
